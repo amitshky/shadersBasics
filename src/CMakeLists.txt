@@ -1,10 +1,11 @@
+file(GLOB SHADERS_BASICS_SRC_FILES ${PROJECT_SOURCE_DIR}/**/*.cpp)
+
 add_executable(
 	${PROJECT_NAME}
-
-	main.cpp
+	"${SHADERS_BASICS_SRC_FILES}"
 )
 
-if (NOT ${SHADERS_BASICS_USE_PRE_BUILT_LIB})
+if(NOT ${SHADERS_BASICS_USE_PRE_BUILT_LIB})
 	# copy binaries from output directory to binaries
 	# so that we can reuse them during build
 	if(${CMAKE_BUILD_TYPE} MATCHES "Debug" AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU"))
