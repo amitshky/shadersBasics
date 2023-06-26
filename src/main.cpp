@@ -1,6 +1,11 @@
-#include <iostream>
+#include "core/core.h"
+#include "engine/engine.h"
 
 int main()
 {
-	std::cout << "hello world!\n";
+	Logger::Init();
+
+	Engine* engine = Engine::Create("Shaders Basics");
+	engine->Run();
+	delete engine;
 }

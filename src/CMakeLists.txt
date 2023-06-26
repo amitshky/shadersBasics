@@ -1,8 +1,10 @@
-file(GLOB SHADERS_BASICS_SRC_FILES ${PROJECT_SOURCE_DIR}/**/*.cpp)
+file(GLOB_RECURSE SHADERS_BASICS_SRC_FILES "${PROJECT_SOURCE_DIR}/src/*.cpp")
 
 add_executable(
 	${PROJECT_NAME}
 	"${SHADERS_BASICS_SRC_FILES}"
+	../lib/imgui/backends/imgui_impl_glfw.cpp
+	../lib/imgui/backends/imgui_impl_vulkan.cpp
 )
 
 if(NOT ${SHADERS_BASICS_USE_PRE_BUILT_LIB})
