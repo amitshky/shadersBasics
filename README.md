@@ -12,7 +12,7 @@
 
 
 ## Build and Run
-* Configure and build the project,
+* Configure and build the project with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=OFF` to build the static libraries. This will also copy the libraries into the `binaries/` directory. You can then build with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=ON` to use those libraries while building instead of building them from scratch.
 ```
 cmake -B build -S . -DSHADERS_BASICS_USE_PRE_BUILT_LIB=OFF
 cmake --build build
@@ -24,11 +24,11 @@ cmake --build build
 
 OR (in VSCode)
 
-* Start debugging (Press F5) (Currently configured for Clang with Ninja and MSVC for Windows)
+* Start debugging (Press F5) (Currently configured for Clang with Ninja and MSVC for Windows) ((NOTE: This will build with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=ON`)
 
 OR (using bat scripts from `scripts` folder)
 
-* Run them from the root directory of the repo. For example:
+* Run them from the root directory of the repo (NOTE: This will build with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=ON`).
 ```
 ./scripts/config-clang-rel.bat
 ./scripts/build-clang.bat
