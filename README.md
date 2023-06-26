@@ -24,7 +24,7 @@ cmake --build build
 
 OR (in VSCode)
 
-* Start debugging (Press F5) (Currently configured for Clang with Ninja and MSVC for Windows) ((NOTE: This will build with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=ON`)
+* Start debugging (Press F5) (Currently configured for Clang with Ninja and MSVC for Windows) (NOTE: This will build with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=ON`)
 
 OR (using bat scripts from `scripts` folder)
 
