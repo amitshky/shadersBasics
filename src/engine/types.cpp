@@ -1,7 +1,5 @@
 #include "engine/types.h"
 
-#include <vulkan/vulkan.h>
-
 #ifdef NDEBUG // release mode
 bool VulkanConfig::enableValidationLayers = false;
 #else // debug mode
