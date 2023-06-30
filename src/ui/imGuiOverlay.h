@@ -7,11 +7,22 @@
 class ImGuiOverlay
 {
 public:
-	static void Init(uint32_t imageCount, VkRenderPass renderPass);
-	static void Cleanup();
+	static void Init(VkInstance vulkanInstance,
+		VkPhysicalDevice physicalDevice,
+		VkDevice deviceVk,
+		uint32_t graphicsQueueIndex,
+		VkQueue graphicsQueue,
+		VkSampleCountFlagBits msaaSampleCount,
+		VkRenderPass renderPass,
+		VkCommandPool commandPool,
+		uint32_t imageCount);
+	static void Cleanup(VkDevice deviceVk);
 	static void Begin();
 	static void End(VkCommandBuffer commandBuffer);
 
 private:
 	static void CheckVkResult(VkResult err);
+
+private:
+	static VkDescriptorPool s_DescriptorPool;
 };

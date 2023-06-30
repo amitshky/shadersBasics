@@ -4,9 +4,21 @@
 #include "imgui/backends/imgui_impl_vulkan.h"
 #include "core/core.h"
 #include "engine/engine.h"
+#include "engine/initializers.h"
+#include "utils/utils.h"
 
 
-void ImGuiOverlay::Init(uint32_t imageCount, VkRenderPass renderPass)
+VkDescriptorPool ImGuiOverlay::s_DescriptorPool = nullptr;
+
+void ImGuiOverlay::Init(VkInstance vulkanInstance,
+	VkPhysicalDevice physicalDevice,
+	VkDevice deviceVk,
+	uint32_t graphicsQueueIndex,
+	VkQueue graphicsQueue,
+	VkSampleCountFlagBits msaaSampleCount,
+	VkRenderPass renderPass,
+	VkCommandPool commandPool,
+	uint32_t imageCount)
 {
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -19,33 +31,53 @@ void ImGuiOverlay::Init(uint32_t imageCount, VkRenderPass renderPass)
 	// Setup Dear ImGui style
 	ImGui::StyleColorsDark();
 
-	// ImGui_ImplGlfw_InitForVulkan(Engine::GetWindowHandle(), true);
-	// ImGui_ImplVulkan_InitInfo info{};
-	// info.Instance = VulkanContext::GetInstance();
-	// info.PhysicalDevice = Device::GetPhysicalDevice();
-	// info.Device = Device::GetDevice();
-	// info.QueueFamily = Device::GetQueueFamilyIndices().graphicsFamily.value();
-	// info.Queue = Device::GetGraphicsQueue();
-	// info.DescriptorPool = DescriptorPool::Get();
-	// info.PipelineCache = VK_NULL_HANDLE;
-	// info.Subpass = 0;
-	// info.MinImageCount = imageCount;
-	// info.ImageCount = imageCount;
-	// info.MSAASamples = Device::GetMSAASamplesCount();
-	// info.Allocator = nullptr;
-	// info.CheckVkResultFn = CheckVkResult;
-	// ImGui_ImplVulkan_Init(&info, renderPass);
+	VkDescriptorPoolSize poolSizes[] = {
+		{VK_DESCRIPTOR_TYPE_SAMPLER,                 100},
+		{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100},
+		{ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,          100},
+		{ VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          100},
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER,   100},
+		{ VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER,   100},
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         100},
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         100},
+		{ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 100},
+		{ VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 100},
+		{ VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT,       100},
+	};
 
-	// VkCommandBuffer cmdBuff = CommandBuffer::BeginSingleTimeCommands();
-	// ImGui_ImplVulkan_CreateFontsTexture(cmdBuff);
-	// CommandBuffer::EndSingleTimeCommands(cmdBuff);
+	VkDescriptorPoolCreateInfo descriptorPoolInfo =
+		initializers::DescriptorPoolCreateInfo(poolSizes, std::size(poolSizes));
+	THROW(vkCreateDescriptorPool(deviceVk, &descriptorPoolInfo, nullptr, &s_DescriptorPool) != VK_SUCCESS,
+		"Failed to create descriptor pool!");
 
-	// Device::WaitIdle();
-	// ImGui_ImplVulkan_DestroyFontUploadObjects();
+	ImGui_ImplGlfw_InitForVulkan(Engine::GetWindowHandle(), true);
+	ImGui_ImplVulkan_InitInfo info{};
+	info.Instance = vulkanInstance;
+	info.PhysicalDevice = physicalDevice;
+	info.Device = deviceVk;
+	info.QueueFamily = graphicsQueueIndex;
+	info.Queue = graphicsQueue;
+	info.DescriptorPool = s_DescriptorPool;
+	info.PipelineCache = VK_NULL_HANDLE;
+	info.Subpass = 0;
+	info.MinImageCount = imageCount;
+	info.ImageCount = imageCount;
+	info.MSAASamples = msaaSampleCount;
+	info.Allocator = nullptr;
+	info.CheckVkResultFn = CheckVkResult;
+	ImGui_ImplVulkan_Init(&info, renderPass);
+
+	VkCommandBuffer cmdBuff = utils::BeginSingleTimeCommands(deviceVk, commandPool);
+	ImGui_ImplVulkan_CreateFontsTexture(cmdBuff);
+	utils::EndSingleTimeCommands(cmdBuff, deviceVk, commandPool, graphicsQueue);
+
+	vkDeviceWaitIdle(deviceVk);
+	ImGui_ImplVulkan_DestroyFontUploadObjects();
 }
 
-void ImGuiOverlay::Cleanup()
+void ImGuiOverlay::Cleanup(VkDevice deviceVk)
 {
+	vkDestroyDescriptorPool(deviceVk, s_DescriptorPool, nullptr);
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();

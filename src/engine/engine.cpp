@@ -5,6 +5,7 @@
 #include "core/input.h"
 #include "engine/initializers.h"
 #include "engine/shader.h"
+#include "ui/imGuiOverlay.h"
 #include "utils/utils.h"
 
 
@@ -63,11 +64,23 @@ void Engine::Init(const char* title, const uint64_t width, const uint64_t height
 	CreateCommandBuffers();
 
 	CreateSyncObjects();
+
+	ImGuiOverlay::Init(m_VulkanInstance,
+		m_PhysicalDevice,
+		m_DeviceVk,
+		m_QueueFamilyIndices.graphicsFamily.value(),
+		m_GraphicsQueue,
+		m_MsaaSamples,
+		m_RenderPass,
+		m_CommandPool,
+		Config::maxFramesInFlight);
 }
 
 void Engine::Cleanup()
 {
 	vkDeviceWaitIdle(m_DeviceVk);
+
+	ImGuiOverlay::Cleanup(m_DeviceVk);
 
 	for (size_t i = 0; i < Config::maxFramesInFlight; ++i)
 	{
@@ -79,24 +92,8 @@ void Engine::Cleanup()
 	vkDestroyPipeline(m_DeviceVk, m_Pipeline, nullptr);
 	vkDestroyPipelineLayout(m_DeviceVk, m_PipelineLayout, nullptr);
 
-	vkDestroyImageView(m_DeviceVk, m_DepthImageView, nullptr);
-	vkDestroyImage(m_DeviceVk, m_DepthImage, nullptr);
-	vkFreeMemory(m_DeviceVk, m_DepthImageMemory, nullptr);
-
-	vkDestroyImageView(m_DeviceVk, m_ColorImageView, nullptr);
-	vkDestroyImage(m_DeviceVk, m_ColorImage, nullptr);
-	vkFreeMemory(m_DeviceVk, m_ColorImageMemory, nullptr);
-
-	for (const auto& framebuffer : m_SwapchainFramebuffers)
-		vkDestroyFramebuffer(m_DeviceVk, framebuffer, nullptr);
-
+	CleanupSwapchain();
 	vkDestroyRenderPass(m_DeviceVk, m_RenderPass, nullptr);
-
-	for (const auto& imageView : m_SwapchainImageViews)
-		vkDestroyImageView(m_DeviceVk, imageView, nullptr);
-
-	// swapchain images are destroyed with `vkDestroySwapchainKHR()`
-	vkDestroySwapchainKHR(m_DeviceVk, m_Swapchain, nullptr);
 
 	vkDestroyDescriptorPool(m_DeviceVk, m_DescriptorPool, nullptr);
 	vkDestroyCommandPool(m_DeviceVk, m_CommandPool, nullptr);
@@ -111,8 +108,10 @@ void Engine::Cleanup()
 
 void Engine::Run()
 {
+	m_LastFrameTime = std::chrono::high_resolution_clock::now();
 	while (m_IsRunning)
 	{
+		float deltatime = CalcFps();
 		Draw();
 		ProcessInput();
 		m_Window->OnUpdate();
@@ -121,7 +120,16 @@ void Engine::Run()
 
 void Engine::Draw()
 {
-	// begin scene
+	BeginScene();
+
+	vkCmdBindPipeline(m_ActiveCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+
+	OnUiRender();
+	EndScene();
+}
+
+void Engine::BeginScene()
+{
 	// wait for previous frame to signal the fence
 	vkWaitForFences(m_DeviceVk, 1, &m_InFlightFences[m_CurrentFrameIndex], VK_TRUE, UINT64_MAX);
 
@@ -173,12 +181,10 @@ void Engine::Draw()
 	renderPassBeginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassBeginInfo.pClearValues = clearValues.data();
 	vkCmdBeginRenderPass(m_ActiveCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
 
-
-	vkCmdBindPipeline(m_ActiveCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
-
-
-	// end scene
+void Engine::EndScene()
+{
 	vkCmdEndRenderPass(m_ActiveCommandBuffer);
 	THROW(vkEndCommandBuffer(m_CommandBuffers[m_CurrentFrameIndex]) != VK_SUCCESS, "Failed to record command buffer!");
 
@@ -211,6 +217,40 @@ void Engine::Draw()
 
 	// update current frame index
 	m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % Config::maxFramesInFlight;
+}
+
+void Engine::OnUiRender()
+{
+	ImGuiOverlay::Begin();
+
+	ImGui::Begin("Profiler");
+	ImGui::Text("%.2f ms/frame (%d fps)", (1000.0f / m_LastFps), m_LastFps);
+	ImGui::End();
+
+	ImGuiOverlay::End(m_ActiveCommandBuffer);
+}
+
+float Engine::CalcFps()
+{
+	++m_FrameCounter;
+	std::chrono::time_point<std::chrono::high_resolution_clock> currentFrameTime =
+		std::chrono::high_resolution_clock::now();
+
+	float deltatime =
+		std::chrono::duration<float, std::chrono::milliseconds::period>(currentFrameTime - m_LastFrameTime).count();
+	m_LastFrameTime = currentFrameTime;
+
+	float fpsTimer =
+		std::chrono::duration<float, std::chrono::milliseconds::period>(currentFrameTime - m_FpsTimePoint).count();
+	// calc fps every 1000ms
+	if (fpsTimer > 1000.0f)
+	{
+		m_LastFps = static_cast<uint32_t>(static_cast<float>(m_FrameCounter) * (1000.0f / fpsTimer));
+		m_FrameCounter = 0;
+		m_FpsTimePoint = currentFrameTime;
+	}
+
+	return deltatime;
 }
 
 void Engine::CreateVulkanInstance(const char* title)
@@ -450,6 +490,43 @@ void Engine::CreateSwapchainImageViews()
 		m_SwapchainImageViews[i] = utils::CreateImageView(
 			m_DeviceVk, m_SwapchainImages[i], m_SwapchainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
+}
+
+void Engine::RecreateSwapchain()
+{
+	while (m_Window->IsMinimized())
+	{
+		m_Window->WaitEvents();
+	}
+
+	vkDeviceWaitIdle(m_DeviceVk);
+	CleanupSwapchain();
+
+	CreateSwapchain();
+	CreateSwapchainImageViews();
+	CreateColorResource();
+	CreateDepthResource();
+	CreateFramebuffers();
+}
+
+void Engine::CleanupSwapchain()
+{
+	vkDestroyImageView(m_DeviceVk, m_DepthImageView, nullptr);
+	vkDestroyImage(m_DeviceVk, m_DepthImage, nullptr);
+	vkFreeMemory(m_DeviceVk, m_DepthImageMemory, nullptr);
+
+	vkDestroyImageView(m_DeviceVk, m_ColorImageView, nullptr);
+	vkDestroyImage(m_DeviceVk, m_ColorImage, nullptr);
+	vkFreeMemory(m_DeviceVk, m_ColorImageMemory, nullptr);
+
+	for (const auto& framebuffer : m_SwapchainFramebuffers)
+		vkDestroyFramebuffer(m_DeviceVk, framebuffer, nullptr);
+
+	for (const auto& imageView : m_SwapchainImageViews)
+		vkDestroyImageView(m_DeviceVk, imageView, nullptr);
+
+	// swapchain images are destroyed with `vkDestroySwapchainKHR()`
+	vkDestroySwapchainKHR(m_DeviceVk, m_Swapchain, nullptr);
 }
 
 void Engine::CreateRenderPass()
@@ -726,20 +803,20 @@ void Engine::CreateSyncObjects()
 void Engine::ProcessInput()
 {
 	// forward input data to ImGui first
-	// ImGuiIO& io = ImGui::GetIO();
-	// if (io.WantCaptureMouse || io.WantCaptureKeyboard)
-	// 	return;
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureMouse || io.WantCaptureKeyboard)
+		return;
 
-	if (Input::IsMouseButtonPressed(Mouse::BUTTON_1))
-	{
-		// hide cursor when moving camera
-		m_Window->HideCursor();
-	}
-	else if (Input::IsMouseButtonReleased(Mouse::BUTTON_1))
-	{
-		// unhide cursor when camera stops moving
-		m_Window->ShowCursor();
-	}
+	// if (Input::IsMouseButtonPressed(Mouse::BUTTON_1))
+	// {
+	// 	// hide cursor when moving camera
+	// 	m_Window->HideCursor();
+	// }
+	// else if (Input::IsMouseButtonReleased(Mouse::BUTTON_1))
+	// {
+	// 	// unhide cursor when camera stops moving
+	// 	m_Window->ShowCursor();
+	// }
 }
 
 void Engine::OnCloseEvent()
@@ -748,13 +825,15 @@ void Engine::OnCloseEvent()
 }
 
 void Engine::OnResizeEvent(int width, int height)
-{}
+{
+	RecreateSwapchain();
+}
 
 void Engine::OnMouseMoveEvent(double xpos, double ypos)
 {
-	// ImGuiIO& io = ImGui::GetIO();
-	// if (io.WantCaptureMouse)
-	// 	return;
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureMouse)
+		return;
 }
 
 void Engine::OnKeyEvent(int key, int scancode, int action, int mods)
@@ -764,7 +843,7 @@ void Engine::OnKeyEvent(int key, int scancode, int action, int mods)
 	if (Input::IsKeyPressed(Key::LEFT_CONTROL) && Input::IsKeyPressed(Key::Q))
 		m_IsRunning = false;
 
-	// 	ImGuiIO& io = ImGui::GetIO();
-	// 	if (io.WantCaptureKeyboard)
-	// 		return;
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureKeyboard)
+		return;
 }

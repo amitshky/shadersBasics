@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <chrono>
 #include <vulkan/vulkan.h>
 #include "core/window.h"
 #include "engine/types.h"
@@ -19,13 +20,17 @@ public:
 	[[nodiscard]] static inline VkPhysicalDevice GetPhysicalDevice() { return s_Instance->m_PhysicalDevice; }
 
 	void Run();
-	void Draw();
 
 private:
 	explicit Engine(const char* title, const uint64_t width = 1280, const uint64_t height = 720);
 
 	void Init(const char* title, const uint64_t width, const uint64_t height);
 	void Cleanup();
+	void Draw();
+	void BeginScene();
+	void EndScene();
+	void OnUiRender();
+	float CalcFps();
 
 	void CreateVulkanInstance(const char* title);
 	void SetupDebugMessenger();
@@ -39,6 +44,8 @@ private:
 
 	void CreateSwapchain();
 	void CreateSwapchainImageViews();
+	void RecreateSwapchain();
+	void CleanupSwapchain();
 
 	void CreateRenderPass();
 	void CreateColorResource();
@@ -113,4 +120,9 @@ private:
 	uint32_t m_CurrentFrameIndex = 0;
 	uint32_t m_NextFrameIndex = 0; // acquired from swapchain
 	bool m_FramebufferResized = false;
+
+	uint32_t m_LastFps = 0;
+	uint32_t m_FrameCounter = 0;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_LastFrameTime;
+	std::chrono::time_point<std::chrono::high_resolution_clock> m_FpsTimePoint;
 };
