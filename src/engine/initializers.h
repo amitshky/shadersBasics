@@ -44,5 +44,14 @@ VkRenderPassCreateInfo RenderPassCreateInfo(uint32_t attachmentCount,
 	uint32_t dependencyCount,
 	const VkSubpassDependency* pDependencies);
 
+// descriptors
+VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo();
+
+// pipeline
+// TODO: create pipeline initializers
+
+// command buffer
+VkCommandBufferAllocateInfo CommandBufferAllocateInfo(VkCommandPool commandPool, uint32_t commandBufferCount);
+
 
 } // namespace initializers

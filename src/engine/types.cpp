@@ -1,10 +1,10 @@
 #include "engine/types.h"
 
 #ifdef NDEBUG // release mode
-bool VulkanConfig::enableValidationLayers = false;
+bool Config::enableValidationLayers = false;
 #else // debug mode
-bool VulkanConfig::enableValidationLayers = true;
+bool Config::enableValidationLayers = true;
 #endif
-uint32_t VulkanConfig::maxFramesInFlight = 2;
-std::array<const char*, 1> VulkanConfig::deviceExtensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
-std::array<const char*, 1> VulkanConfig::validationLayers{ "VK_LAYER_KHRONOS_validation" };
+uint32_t Config::maxFramesInFlight = 2;
+std::array<const char*, 1> Config::deviceExtensions{ VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+std::array<const char*, 1> Config::validationLayers{ "VK_LAYER_KHRONOS_validation" };

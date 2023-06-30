@@ -30,7 +30,7 @@ bool CheckValidationLayerSupport()
 	std::vector<VkLayerProperties> availableLayerProperites{ validationLayerCount };
 	vkEnumerateInstanceLayerProperties(&validationLayerCount, availableLayerProperites.data());
 
-	for (const auto& layer : VulkanConfig::validationLayers)
+	for (const auto& layer : Config::validationLayers)
 	{
 		bool layerFound = false;
 
@@ -56,7 +56,7 @@ std::vector<const char*> GetRequiredExtensions()
 	const char** extensions = Window::GetRequiredVulkanExtensions(&extensionCount);
 	std::vector<const char*> availableExtensions{ extensions, extensions + extensionCount };
 
-	if (VulkanConfig::enableValidationLayers)
+	if (Config::enableValidationLayers)
 		availableExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
 	return availableExtensions;
@@ -92,8 +92,7 @@ bool CheckDeviceExtensionSupport(VkPhysicalDevice physicalDevice)
 	std::vector<VkExtensionProperties> availableExtensions{ extensionCount };
 	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, availableExtensions.data());
 
-	std::set<std::string> requiredExtensions{ VulkanConfig::deviceExtensions.begin(),
-		VulkanConfig::deviceExtensions.end() };
+	std::set<std::string> requiredExtensions{ Config::deviceExtensions.begin(), Config::deviceExtensions.end() };
 
 	for (const auto& extension : availableExtensions)
 		requiredExtensions.erase(extension.extensionName);

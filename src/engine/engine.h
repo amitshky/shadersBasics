@@ -19,6 +19,7 @@ public:
 	[[nodiscard]] static inline VkPhysicalDevice GetPhysicalDevice() { return s_Instance->m_PhysicalDevice; }
 
 	void Run();
+	void Draw();
 
 private:
 	explicit Engine(const char* title, const uint64_t width = 1280, const uint64_t height = 720);
@@ -43,6 +44,13 @@ private:
 	void CreateColorResource();
 	void CreateDepthResource();
 	void CreateFramebuffers();
+
+	void CreatePipelineLayout();
+	void CreatePipeline(const char* vertShaderPath, const char* fragShaderPath);
+
+	void CreateCommandBuffers();
+
+	void CreateSyncObjects();
 
 	// event callbacks
 	void ProcessInput();
@@ -88,4 +96,21 @@ private:
 	VkDeviceMemory m_DepthImageMemory;
 	VkImageView m_DepthImageView;
 	std::vector<VkFramebuffer> m_SwapchainFramebuffers;
+
+	VkPipelineLayout m_PipelineLayout;
+	VkPipeline m_Pipeline;
+
+	std::vector<VkCommandBuffer> m_CommandBuffers;
+
+	// synchronization objects
+	// used to acquire swapchain images
+	std::vector<VkSemaphore> m_ImageAvailableSemaphores;
+	// signaled when command buffers have finished execution
+	std::vector<VkSemaphore> m_RenderFinishedSemaphores;
+	std::vector<VkFence> m_InFlightFences;
+
+	VkCommandBuffer m_ActiveCommandBuffer;
+	uint32_t m_CurrentFrameIndex = 0;
+	uint32_t m_NextFrameIndex = 0; // acquired from swapchain
+	bool m_FramebufferResized = false;
 };

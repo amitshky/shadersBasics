@@ -101,6 +101,8 @@ VkSwapchainCreateInfoKHR SwapchainCreateInfo(const SwapchainCreateDetails& detai
 	return info;
 }
 
+
+// render pass
 VkAttachmentDescription AttachmentDescription(VkFormat format,
 	VkSampleCountFlagBits samples,
 	VkImageLayout initialLayout,
@@ -176,6 +178,36 @@ VkRenderPassCreateInfo RenderPassCreateInfo(uint32_t attachmentCount,
 	info.pSubpasses = pSubpasses;
 	info.dependencyCount = dependencyCount;
 	info.pDependencies = pDependencies;
+
+	return info;
+}
+
+
+// descriptors
+VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo()
+{
+	VkPipelineLayoutCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	info.setLayoutCount = 0;
+	info.pSetLayouts = nullptr;
+	info.pushConstantRangeCount = 0;
+	info.pPushConstantRanges = nullptr;
+
+	return info;
+}
+
+
+// pipeline
+
+
+// command buffer
+VkCommandBufferAllocateInfo CommandBufferAllocateInfo(VkCommandPool commandPool, uint32_t commandBufferCount)
+{
+	VkCommandBufferAllocateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	info.commandPool = commandPool;
+	info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	info.commandBufferCount = commandBufferCount;
 
 	return info;
 }
