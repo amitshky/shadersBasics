@@ -123,6 +123,7 @@ void Engine::Draw()
 	BeginScene();
 
 	vkCmdBindPipeline(m_ActiveCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline);
+	vkCmdDraw(m_ActiveCommandBuffer, 6, 1, 0, 0);
 
 	OnUiRender();
 	EndScene();
@@ -651,15 +652,12 @@ void Engine::CreatePipeline(const char* vertShaderPath, const char* fragShaderPa
 
 	// fixed functions
 	// vertex input
-	auto vertexBindingDesc = Vertex::GetBindingDescription();
-	auto vertexAttrDesc = Vertex::GetAttributeDescription();
-
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.pVertexBindingDescriptions = &vertexBindingDesc;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertexAttrDesc.size());
-	vertexInputInfo.pVertexAttributeDescriptions = vertexAttrDesc.data();
+	vertexInputInfo.vertexBindingDescriptionCount = 0;
+	vertexInputInfo.pVertexBindingDescriptions = nullptr;
+	vertexInputInfo.vertexAttributeDescriptionCount = 0;
+	vertexInputInfo.pVertexAttributeDescriptions = nullptr;
 
 	// input assembly
 	VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
@@ -680,10 +678,8 @@ void Engine::CreatePipeline(const char* vertShaderPath, const char* fragShaderPa
 	rasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
 	rasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizationStateInfo.lineWidth = 1.0f;
-	rasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-	// we specify counter clockwise because in the projection matrix we flipped the y-coord
+	rasterizationStateInfo.cullMode = VK_CULL_MODE_NONE;
 	rasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	// the depth value can be altered by adding a constant value based on fragment slope
 	rasterizationStateInfo.depthBiasEnable = VK_FALSE;
 	rasterizationStateInfo.depthBiasConstantFactor = 0.0f;
 	rasterizationStateInfo.depthBiasClamp = 0.0f;
