@@ -52,12 +52,19 @@ private:
 	void CreateDepthResource();
 	void CreateFramebuffers();
 
+	void CreateUniformBuffers();
+	void UpdateUniformBuffers();
+
+	void CreateDescriptorSetLayout();
+	void CreateDescriptorSets();
 	void CreatePipelineLayout();
+
 	void CreatePipeline(const char* vertShaderPath, const char* fragShaderPath);
 
 	void CreateCommandBuffers();
 
 	void CreateSyncObjects();
+
 
 	// event callbacks
 	void ProcessInput();
@@ -104,7 +111,12 @@ private:
 	VkImageView m_DepthImageView;
 	std::vector<VkFramebuffer> m_SwapchainFramebuffers;
 
+	VkDescriptorSetLayout m_DescriptorSetLayout;
 	VkPipelineLayout m_PipelineLayout;
+	std::vector<VkDescriptorSet> m_DescriptorSets;
+	std::vector<VkBuffer> m_UniformBuffers;
+	std::vector<VkDeviceMemory> m_UniformBufferMemory;
+
 	VkPipeline m_Pipeline;
 
 	std::vector<VkCommandBuffer> m_CommandBuffers;

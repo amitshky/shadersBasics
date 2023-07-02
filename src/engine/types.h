@@ -101,3 +101,9 @@ struct hash<Vertex>
 	}
 };
 } // namespace std
+
+struct UniformBufferObject
+{
+	alignas(16) glm::vec3 iResolution;
+	alignas(4) float iTime;
+};

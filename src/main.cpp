@@ -5,7 +5,7 @@ int main()
 {
 	Logger::Init();
 
-	Engine* engine = Engine::Create("Shaders Basics");
+	Engine* engine = Engine::Create("Shaders Basics", 800, 800);
 	engine->Run();
 	delete engine;
 }

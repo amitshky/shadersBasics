@@ -101,6 +101,24 @@ VkSwapchainCreateInfoKHR SwapchainCreateInfo(const SwapchainCreateDetails& detai
 	return info;
 }
 
+VkFramebufferCreateInfo FramebufferCreateInfo(VkRenderPass renderPass,
+	uint32_t attachmentCount,
+	const VkImageView* pAttachments,
+	uint32_t width,
+	uint32_t height)
+{
+	VkFramebufferCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+	info.renderPass = renderPass;
+	info.attachmentCount = attachmentCount;
+	info.pAttachments = pAttachments;
+	info.width = width;
+	info.height = height;
+	info.layers = 1;
+
+	return info;
+}
+
 
 // render pass
 VkAttachmentDescription AttachmentDescription(VkFormat format,
@@ -184,20 +202,207 @@ VkRenderPassCreateInfo RenderPassCreateInfo(uint32_t attachmentCount,
 
 
 // descriptors
-VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo()
+VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo(uint32_t setLayoutCount,
+	const VkDescriptorSetLayout* pSetLayouts,
+	uint32_t pushConstantRangeCount,
+	const VkPushConstantRange* pPushConstantRanges)
 {
 	VkPipelineLayoutCreateInfo info{};
 	info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	info.setLayoutCount = 0;
-	info.pSetLayouts = nullptr;
-	info.pushConstantRangeCount = 0;
-	info.pPushConstantRanges = nullptr;
+	info.setLayoutCount = setLayoutCount;
+	info.pSetLayouts = pSetLayouts;
+	info.pushConstantRangeCount = pushConstantRangeCount;
+	info.pPushConstantRanges = pPushConstantRanges;
 
 	return info;
 }
 
+VkDescriptorSetLayoutBinding DescriptorSetLayoutBinding(uint32_t binding,
+	VkDescriptorType descriptorType,
+	uint32_t descriptorCount,
+	VkShaderStageFlags stageFlags)
+{
+	VkDescriptorSetLayoutBinding layoutBinding{};
+	layoutBinding.binding = binding;
+	layoutBinding.descriptorType = descriptorType;
+	layoutBinding.descriptorCount = descriptorCount;
+	layoutBinding.stageFlags = stageFlags;
+	layoutBinding.pImmutableSamplers = nullptr;
+
+	return layoutBinding;
+}
+
+VkDescriptorSetLayoutCreateInfo DescriptorSetLayoutCreateInfo(uint32_t bindingCount,
+	const VkDescriptorSetLayoutBinding* pBindings)
+{
+	VkDescriptorSetLayoutCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	info.bindingCount = bindingCount;
+	info.pBindings = pBindings;
+	return info;
+	;
+}
+
+VkDescriptorSetAllocateInfo DescriptorSetAllocateInfo(VkDescriptorPool descriptorPool,
+	uint32_t descriptorSetCount,
+	const VkDescriptorSetLayout* pSetLayouts)
+{
+	VkDescriptorSetAllocateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	info.descriptorPool = descriptorPool;
+	info.descriptorSetCount = descriptorSetCount;
+	info.pSetLayouts = pSetLayouts;
+
+	return info;
+}
+
+VkDescriptorBufferInfo DescriptorBufferInfo(VkBuffer buffer, VkDeviceSize offset, VkDeviceSize range)
+{
+	VkDescriptorBufferInfo info{};
+	info.buffer = buffer;
+	info.offset = offset;
+	info.range = range;
+
+	return info;
+}
+
+VkWriteDescriptorSet WriteDescriptorSet(VkDescriptorSet dstSet,
+	uint32_t dstBinding,
+	VkDescriptorType descriptorType,
+	uint32_t descriptorCount,
+	const VkDescriptorBufferInfo* pBufferInfo,
+	const VkDescriptorImageInfo* pImageInfo)
+{
+	VkWriteDescriptorSet descWrite{};
+	descWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descWrite.dstSet = dstSet;
+	descWrite.dstBinding = dstBinding;
+	descWrite.dstArrayElement = 0;
+	descWrite.descriptorType = descriptorType;
+	descWrite.descriptorCount = descriptorCount;
+	descWrite.pBufferInfo = pBufferInfo;
+	descWrite.pImageInfo = pImageInfo;
+
+	return descWrite;
+}
+
 
 // pipeline
+VkPipelineVertexInputStateCreateInfo PipelineVertexInputStateCreateInfo(uint32_t vertexBindingDescriptionCount,
+	const VkVertexInputBindingDescription* pVertexBindingDescriptions,
+	uint32_t vertexAttributeDescriptionCount,
+	const VkVertexInputAttributeDescription* pVertexAttributeDescriptions)
+{
+	VkPipelineVertexInputStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	info.vertexBindingDescriptionCount = vertexBindingDescriptionCount;
+	info.pVertexBindingDescriptions = pVertexBindingDescriptions;
+	info.vertexAttributeDescriptionCount = vertexAttributeDescriptionCount;
+	info.pVertexAttributeDescriptions = pVertexAttributeDescriptions;
+
+	return info;
+}
+
+VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyStateCreateInfo(VkPrimitiveTopology topology)
+{
+	VkPipelineInputAssemblyStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	info.topology = topology;
+	info.primitiveRestartEnable = VK_FALSE;
+
+	return info;
+}
+
+VkPipelineViewportStateCreateInfo PipelineViewportStateCreateInfo(uint32_t viewportCount, uint32_t scissorCount)
+{
+	VkPipelineViewportStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+	info.viewportCount = 1;
+	info.scissorCount = 1;
+
+	return info;
+}
+
+VkPipelineRasterizationStateCreateInfo PipelineRasterizationStateCreateInfo(VkCullModeFlags cullMode,
+	VkFrontFace frontFace)
+{
+	VkPipelineRasterizationStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	info.depthClampEnable = VK_FALSE;
+	info.rasterizerDiscardEnable = VK_FALSE;
+	info.polygonMode = VK_POLYGON_MODE_FILL;
+	info.lineWidth = 1.0f;
+	info.cullMode = cullMode;
+	info.frontFace = frontFace;
+	info.depthBiasEnable = VK_FALSE;
+	info.depthBiasConstantFactor = 0.0f;
+	info.depthBiasClamp = 0.0f;
+	info.depthBiasSlopeFactor = 0.0f;
+
+	return info;
+}
+
+VkPipelineMultisampleStateCreateInfo PipelineMultisampleStateCreateInfo(VkBool32 sampleShadingEnable,
+	VkSampleCountFlagBits rasterizationSamples,
+	float minSampleShading)
+{
+	VkPipelineMultisampleStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	info.sampleShadingEnable = sampleShadingEnable;
+	info.rasterizationSamples = rasterizationSamples;
+	info.minSampleShading = minSampleShading; // closer to 1 is smoother
+	info.pSampleMask = nullptr;
+	info.alphaToCoverageEnable = VK_FALSE;
+	info.alphaToOneEnable = VK_FALSE;
+
+	return info;
+}
+
+VkPipelineDepthStencilStateCreateInfo PipelineDepthStencilStateCreateInfo(VkBool32 depthTestEnable,
+	VkBool32 depthWriteEnable)
+{
+	VkPipelineDepthStencilStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	info.depthTestEnable = depthTestEnable;
+	info.depthWriteEnable = depthWriteEnable;
+	info.depthCompareOp = VK_COMPARE_OP_LESS;
+	info.depthBoundsTestEnable = VK_FALSE;
+	info.minDepthBounds = 0.0f;
+	info.maxDepthBounds = 1.0f;
+	info.stencilTestEnable = VK_FALSE;
+	info.front = {};
+	info.back = {};
+
+	return info;
+}
+
+VkPipelineColorBlendStateCreateInfo PipelineColorBlendStateCreateInfo(
+	const VkPipelineColorBlendAttachmentState& colorBlendAttachment)
+{
+	VkPipelineColorBlendStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	info.logicOpEnable = VK_FALSE;
+	info.logicOp = VK_LOGIC_OP_COPY;
+	info.attachmentCount = 1;
+	info.pAttachments = &colorBlendAttachment;
+	info.blendConstants[0] = 0.0f;
+	info.blendConstants[1] = 0.0f;
+	info.blendConstants[2] = 0.0f;
+	info.blendConstants[3] = 0.0f;
+
+	return info;
+}
+
+VkPipelineDynamicStateCreateInfo PipelineDynamicStateCreateInfo(uint32_t dynamicStateCount,
+	const VkDynamicState* pDynamicStates)
+{
+	VkPipelineDynamicStateCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	info.dynamicStateCount = dynamicStateCount;
+	info.pDynamicStates = pDynamicStates;
+
+	return info;
+}
 
 
 // command buffer
