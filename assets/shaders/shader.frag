@@ -11,8 +11,6 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	// TODO: pass uniforms for the width, height, time
-	// const vec3 ubo.iResolution = vec3(800.0, 800.0, 1.0);
 	// converting uv to [-1,1] and multiplying the x comp of uv with the aspect ratio
 	vec2 uv = (gl_FragCoord.xy * 2.0 - ubo.iResolution.xy) / ubo.iResolution.y;
 
