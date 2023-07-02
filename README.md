@@ -49,6 +49,10 @@ python format.py
 * Left click and drag the mouse to move the camera -->
 
 
+## Screenshots
+<img src="img/wave-90.gif" width=400>
+
+
 
 ## References
 * [Vulkan tutorial](https://vulkan-tutorial.com/)
