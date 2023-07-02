@@ -11,6 +11,13 @@
 * [Clang](https://releases.llvm.org/download.html)
 
 
+## Clone
+Clone with `--recursive`
+```
+git clone --recursive https://github.com/amitshky/shadersBasics.git
+```
+
+
 ## Build and Run
 * Configure and build the project with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=OFF` to build the static libraries. This will also copy the libraries into the `binaries/` directory. You can then build with `-DSHADERS_BASICS_USE_PRE_BUILT_LIB=ON` to use those libraries while building instead of building them from scratch.
 ```
