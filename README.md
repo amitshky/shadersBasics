@@ -58,9 +58,11 @@ python format.py
 
 ## Screenshots
 
-checkout `735f770a3fcfca2b98da81e2a32400ecbdd55bd2`\
-<img src="img/wave-90.gif" width=400>
+checkout `1e78f83db5289800e632ff72ecaf2ef0daca815c` (ref: [An introduction to Shader Art Coding - kishimisu](https://youtu.be/f4s1h2YETNY))\
+<img src="img/kishimisu-100-375.gif" width=500>
 
+checkout `735f770a3fcfca2b98da81e2a32400ecbdd55bd2`\
+<img src="img/wave-90.gif" width=500>
 
 
 ## References
