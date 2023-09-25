@@ -21,10 +21,10 @@ vec3 palette(float t)
 void main()
 {
 	// converting uv to [-1,1] and multiplying the x comp of uv with the aspect ratio
-	// vec2 uv = (gl_FragCoord.xy * 2.0 - ubo.iResolution.xy) / ubo.iResolution.y;
+	vec2 uv = (gl_FragCoord.xy * 2.0 - ubo.iResolution.xy) / ubo.iResolution.y;
 	// vec2 uv0 = uv;
 
-	// vec3 finalCol = vec3(0.0);
+	vec3 finalCol = vec3(0.0);
 
 	// for (float i = 0.0; i < 3.0; ++i)
 	// {
@@ -39,10 +39,10 @@ void main()
 	// 	finalCol += col * d;
 	// }
 
-	vec3 finalCol = vec3(0.0);
+	float radius = 100.0;
 
-	if ((gl_FragCoord.x * gl_FragCoord.x + gl_FragCoord.y * gl_FragCoord.y) <= 7600)
-		finalCol = vec3(1.0, 0.0, 0.0);
+	if ((uv.x * uv.x + uv.y * uv.y) <= (radius / ubo.iResolution.x))
+		finalCol = vec3(0.4, 0.4, 0.7);
 
 	outColor = vec4(finalCol, 1.0);
 }
