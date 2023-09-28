@@ -31,7 +31,6 @@ vec4 RayColor(const Ray r)
 void main()
 {
 	float aspectRatio = ubo.iResolution.x / ubo.iResolution.y;
-
 	float viewportHeight = 2.0;
 	float viewportWidth = viewportHeight * aspectRatio;
 
