@@ -9,40 +9,51 @@ ubo;
 
 layout(location = 0) out vec4 outColor;
 
-vec3 palette(float t)
+struct Ray
 {
-	vec3 a = vec3(0.5, 0.5, 0.5);
-	vec3 b = vec3(0.5, 0.5, 0.5);
-	vec3 c = vec3(1.0, 1.0, 1.0);
-	vec3 d = vec3(0.263, 0.416, 0.557);
-	return a + b * cos(6.28318 * (c * t + d));
+	vec3 origin;
+	vec3 direction;
+};
+
+vec3 RayAt(const Ray r, float t)
+{
+	return r.origin + t * r.direction;
+}
+
+vec4 RayColor(const Ray r)
+{
+	vec3 dir = normalize(r.direction);
+	float a = 0.5 * (dir.y + 1.0);
+
+	return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
 }
 
 void main()
 {
-	// converting uv to [-1,1] and multiplying the x comp of uv with the aspect ratio
-	vec2 uv = (gl_FragCoord.xy * 2.0 - ubo.iResolution.xy) / ubo.iResolution.y;
-	// vec2 uv0 = uv;
+	float aspectRatio = ubo.iResolution.x / ubo.iResolution.y;
 
-	vec3 finalCol = vec3(0.0);
+	float viewportHeight = 2.0;
+	float viewportWidth = viewportHeight * aspectRatio;
 
-	// for (float i = 0.0; i < 3.0; ++i)
-	// {
-	// 	uv = fract(uv * 1.3) - 0.5;
-	// 	float d = length(uv) * exp(-length(uv0));
-	// 	vec3 col = palette(length(uv0) + i * 0.5 + ubo.iTime * 0.5);
+	// camera
+	float focalLength = 1.0;
+	vec3 cameraPos = vec3(0.0, 0.0, 0.0);
 
-	// 	d = sin(d * 8.0 + ubo.iTime) / 8.0;
-	// 	d = abs(d);
-	// 	d = pow(0.01 / d, 1.5); // pow changes the contrast
+	// viewport vectors (horizontal and vertical)
+	vec3 viewportU = vec3(viewportWidth, 0.0, 0.0);
+	vec3 viewportV = vec3(0.0, -viewportHeight, 0.0);
 
-	// 	finalCol += col * d;
-	// }
+	// pixel-to-pixel vectors
+	vec3 deltaU = viewportU / ubo.iResolution.x;
+	vec3 deltaV = viewportV / ubo.iResolution.y;
 
-	float radius = 100.0;
+	// upper-left pixel
+	vec3 viewportUpperLeft = cameraPos - vec3(0.0, 0.0, focalLength) - viewportU / 2 - viewportV / 2;
+	vec3 pixelLoc = viewportUpperLeft + 0.5 * (deltaU + deltaV);
 
-	if ((uv.x * uv.x + uv.y * uv.y) <= (radius / ubo.iResolution.x))
-		finalCol = vec3(0.4, 0.4, 0.7);
+	vec3 pixelCenter = pixelLoc + (gl_FragCoord.x * deltaU) + (gl_FragCoord.y * deltaV);
+	vec3 rayDir = pixelCenter - cameraPos;
 
-	outColor = vec4(finalCol, 1.0);
+	Ray ray = Ray(cameraPos, rayDir);
+	outColor = RayColor(ray);
 }
