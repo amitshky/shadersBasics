@@ -20,7 +20,7 @@ vec3 RayAt(const Ray r, float t)
 	return r.origin + t * r.direction;
 }
 
-bool HitSphere(const vec3 center, const float radius, const Ray r)
+float HitSphere(const vec3 center, const float radius, const Ray r)
 {
 	vec3 originToCenter = r.origin - center;
 	float a = dot(r.direction, r.direction);
@@ -29,15 +29,25 @@ bool HitSphere(const vec3 center, const float radius, const Ray r)
 
 	float discriminant = b * b - 4 * a * c;
 
-	return (discriminant >= 0);
+	if (discriminant < 0)
+		return -1.0;
+
+	// return the value of `t` to calc point of point of hit
+	return (-b - sqrt(discriminant)) / (2.0 * a);
 }
 
 vec4 RayColor(const Ray r)
 {
 	vec3 sphereCenter = vec3(0.0, 0.0, -1.0);
 	float sphereRadius = 0.5;
-	if (HitSphere(sphereCenter, sphereRadius, r))
-		return vec4(1.0, 0.0, 0.0, 1.0);
+
+	float t = HitSphere(sphereCenter, sphereRadius, r);
+	if (t > 0.0)
+	{
+		// calc normal
+		vec3 normal = normalize(RayAt(r, t) - sphereCenter);
+		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+	}
 
 	vec3 dir = normalize(r.direction);
 	float a = 0.5 * (dir.y + 1.0);
