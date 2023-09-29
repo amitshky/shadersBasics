@@ -58,7 +58,7 @@ python format.py
 
 ## Screenshots
 
-Ray traced sphere (checkout `20e795e77a675fbeff6d8baa7c27600456a5f36d`) (ref: [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html))\
+Ray traced sphere (checkout `5574e973685c9504c7081f52b86a2e9d48fac18a`) (ref: [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html))\
 <img src="img/firstSphere.png" width=500>
 
 
