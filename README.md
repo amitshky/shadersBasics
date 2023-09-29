@@ -72,3 +72,4 @@ checkout `735f770a3fcfca2b98da81e2a32400ecbdd55bd2`\
 * [Sascha Willems examples](https://github.com/SaschaWillems/Vulkan)
 * [vkguide.dev](https://vkguide.dev/)
 * [An introduction to Shader Art Coding - kishimisu](https://youtu.be/f4s1h2YETNY)
+* [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
