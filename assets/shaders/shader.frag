@@ -34,14 +34,13 @@ bool HitSphere(const vec3 center, const float radius, const Ray r)
 
 vec4 RayColor(const Ray r)
 {
-	vec3 dir = normalize(r.direction);
-	float a = 0.5 * (dir.y + 1.0);
-
 	vec3 sphereCenter = vec3(0.0, 0.0, -1.0);
 	float sphereRadius = 0.5;
-	if (HitSphere(sphereCenter, 0.5, r))
+	if (HitSphere(sphereCenter, sphereRadius, r))
 		return vec4(1.0, 0.0, 0.0, 1.0);
 
+	vec3 dir = normalize(r.direction);
+	float a = 0.5 * (dir.y + 1.0);
 	return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
 }
 
