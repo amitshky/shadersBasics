@@ -22,18 +22,26 @@ vec3 RayAt(const Ray r, float t)
 
 float HitSphere(const vec3 center, const float radius, const Ray r)
 {
+	// in the quadriatic equation
+	// a = dir . dir
+	// b = 2 * (dir . (org - center))
+	// c = org . org - radius^2
+	// replace b = 2h in quadriatic equation
+	// (-h +- sqrt(h^2 - ac))/a
+	// h = b / 2
+	// NOTE: the dot product of itself can be replaced with length squared
 	vec3 originToCenter = r.origin - center;
 	float a = dot(r.direction, r.direction);
-	float b = 2.0 * dot(r.direction, originToCenter);
+	float h = dot(r.direction, originToCenter);
 	float c = dot(originToCenter, originToCenter) - radius * radius;
 
-	float discriminant = b * b - 4 * a * c;
+	float discriminant = h * h - a * c;
 
 	if (discriminant < 0)
 		return -1.0;
 
 	// return the value of `t` to calc point of point of hit
-	return (-b - sqrt(discriminant)) / (2.0 * a);
+	return (-h - sqrt(discriminant)) / a;
 }
 
 vec4 RayColor(const Ray r)
