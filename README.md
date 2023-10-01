@@ -6,7 +6,7 @@
 * [Vulkan SDK](https://vulkan.lunarg.com/sdk/home) ([Installation guide](https://vulkan.lunarg.com/doc/sdk/latest/windows/getting_started.html))
 
 ### Optional
-(Install these if you want to run `format.py` (runs clang-format on all source files))
+(Install these if you want to run `scripts/format.py` (runs clang-format on all source files))
 * [Python](https://www.python.org/downloads/)
 * [Clang](https://releases.llvm.org/download.html)
 

@@ -63,7 +63,7 @@ void Engine::Init(const char* title, const uint64_t width, const uint64_t height
 	CreateDescriptorSets();
 	CreatePipelineLayout();
 
-	CreatePipeline("assets/shaders/shader.vert.spv", "assets/shaders/shader.frag.spv");
+	CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/shader.frag.spv");
 
 	CreateCommandBuffers();
 
