@@ -1,6 +1,7 @@
 #include "engine/engine.h"
 
 #include <set>
+#include <glm/gtc/type_ptr.hpp>
 #include "core/core.h"
 #include "core/input.h"
 #include "engine/initializers.h"
@@ -79,6 +80,9 @@ void Engine::Init(const char* title, const uint64_t width, const uint64_t height
 		m_RenderPass,
 		m_CommandPool,
 		Config::maxFramesInFlight);
+
+	m_Camera = std::make_unique<Camera>(
+		static_cast<float>(m_SwapchainExtent.width) / static_cast<float>(m_SwapchainExtent.height), m_CameraPos);
 }
 
 void Engine::Cleanup()
@@ -124,13 +128,15 @@ void Engine::Run()
 	while (m_IsRunning)
 	{
 		float deltatime = CalcFps();
-		Draw();
+		Draw(deltatime);
 		ProcessInput();
 		m_Window->OnUpdate();
+
+		m_Camera->SetPosition(m_CameraPos);
 	}
 }
 
-void Engine::Draw()
+void Engine::Draw(float deltatime)
 {
 	BeginScene();
 
@@ -145,6 +151,7 @@ void Engine::Draw()
 		nullptr);
 	vkCmdDraw(m_ActiveCommandBuffer, 6, 1, 0, 0);
 
+	m_Camera->OnUpdate(deltatime);
 	UpdateUniformBuffers();
 
 	OnUiRender();
@@ -162,13 +169,9 @@ void Engine::UpdateUniformBuffers()
 	ubo.iTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
-	ubo.view = glm::lookAt(glm::vec3(0.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	ubo.proj = glm::perspective(glm::radians(45.0f),
-		static_cast<float>(m_SwapchainExtent.width) / static_cast<float>(m_SwapchainExtent.height),
-		0.01f,
-		100.0f);
+	ubo.viewProj = m_Camera->GetViewProjectionMatrix();
 
-	void* data;
+	void* data = nullptr;
 	vkMapMemory(m_DeviceVk, m_UniformBufferMemory[m_CurrentFrameIndex], 0, sizeof(ubo), 0, &data);
 	memcpy(data, &ubo, sizeof(ubo));
 	vkUnmapMemory(m_DeviceVk, m_UniformBufferMemory[m_CurrentFrameIndex]);
@@ -271,6 +274,10 @@ void Engine::OnUiRender()
 
 	ImGui::Begin("Profiler");
 	ImGui::Text("%.2f ms/frame (%d fps)", (1000.0f / m_LastFps), m_LastFps);
+	ImGui::End();
+
+	ImGui::Begin("Settings");
+	ImGui::DragFloat3("Camera Position###cameraPos", glm::value_ptr(m_CameraPos));
 	ImGui::End();
 
 	ImGuiOverlay::End(m_ActiveCommandBuffer);
@@ -853,6 +860,8 @@ void Engine::OnCloseEvent()
 void Engine::OnResizeEvent(int width, int height)
 {
 	RecreateSwapchain();
+	m_Camera->SetAspectRatio(
+		static_cast<float>(m_SwapchainExtent.width) / static_cast<float>(m_SwapchainExtent.height));
 }
 
 void Engine::OnMouseMoveEvent(double xpos, double ypos)

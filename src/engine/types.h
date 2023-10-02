@@ -107,6 +107,5 @@ struct UniformBufferObject
 	alignas(16) glm::vec3 iResolution;
 	alignas(4) float iTime;
 	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 proj;
+	alignas(16) glm::mat4 viewProj;
 };

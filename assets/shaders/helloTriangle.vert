@@ -5,8 +5,7 @@ layout(binding = 0) uniform UniformBufferObject
 	vec3 iResolution;
 	float iTime;
 	mat4 model;
-	mat4 view;
-	mat4 proj;
+	mat4 viewProj;
 }
 ubo;
 
@@ -36,5 +35,5 @@ void main()
 
 	vec3 pos = positions[gl_VertexIndex];
 	outColor = colors[gl_VertexIndex];
-	gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0);
+	gl_Position = ubo.viewProj * ubo.model * vec4(pos, 1.0);
 }
