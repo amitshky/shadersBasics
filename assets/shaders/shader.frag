@@ -6,6 +6,7 @@ layout(binding = 0) uniform UniformBufferObject
 	float iTime;
 	mat4 model;
 	mat4 viewProj;
+	vec3 cameraPos;
 }
 ubo;
 
@@ -73,7 +74,7 @@ void main()
 
 	// camera
 	float focalLength = 1.0;
-	vec3 cameraPos = vec3(0.0, 0.0, 0.0);
+	// vec3 cameraPos = vec3(0.0, 0.0, 0.0);
 
 	// viewport vectors (horizontal and vertical)
 	vec3 viewportU = vec3(viewportWidth, 0.0, 0.0);
@@ -84,13 +85,13 @@ void main()
 	vec3 pixelDeltaV = viewportV / ubo.iResolution.y;
 
 	// upper-left pixel
-	vec3 viewportUpperLeft = cameraPos - vec3(0.0, 0.0, focalLength) - viewportU / 2 - viewportV / 2;
+	vec3 viewportUpperLeft = ubo.cameraPos - vec3(0.0, 0.0, focalLength) - viewportU / 2 - viewportV / 2;
 	// location of the center pixel of the upper left corner of the viewport
 	vec3 pixelLoc = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
 
 	vec3 pixelCenter = pixelLoc + (gl_FragCoord.x * pixelDeltaU) + (gl_FragCoord.y * pixelDeltaV);
-	vec3 rayDir = pixelCenter - cameraPos;
+	vec3 rayDir = pixelCenter - ubo.cameraPos;
 
-	Ray ray = Ray(cameraPos, rayDir);
+	Ray ray = Ray(ubo.cameraPos, rayDir);
 	outColor = RayColor(ray);
 }

@@ -108,4 +108,5 @@ struct UniformBufferObject
 	alignas(4) float iTime;
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 viewProj;
+	alignas(16) glm::vec3 cameraPos;
 };

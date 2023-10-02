@@ -2,4 +2,4 @@
 
 call .\scripts\config-clang-dbg.bat
 call .\scripts\build-clang.bat
-call .\scripts\run-clang.bat
+call .\scripts\run-clang-dbg.bat

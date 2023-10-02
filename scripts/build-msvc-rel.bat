@@ -1,2 +1,2 @@
 @echo off
-cmake --build build --config Release
+cmake --build build/msvc --config Release

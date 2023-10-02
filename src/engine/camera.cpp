@@ -18,4 +18,7 @@ void Camera::OnUpdate(float deltatime)
 	m_ViewMatrix = glm::lookAt(m_Position, m_Position + m_ForwardDirection, glm::vec3(0.0f, 1.0f, 0.0f));
 	m_ProjectionMatrix = glm::perspective(m_FOVy, m_AspectRatio, m_Near, m_Far);
 	m_ViewProjectionMatrix = m_ProjectionMatrix * m_ViewMatrix;
+
+	m_InverseViewMatrix = glm::inverse(m_ViewMatrix);
+	m_InverseProjectionMatrix = glm::inverse(m_ProjectionMatrix);
 }

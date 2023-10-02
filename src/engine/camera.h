@@ -35,4 +35,7 @@ private:
 	glm::mat4 m_ViewMatrix{};
 	glm::mat4 m_ProjectionMatrix{};
 	glm::mat4 m_ViewProjectionMatrix{};
+
+	glm::mat4 m_InverseViewMatrix{};
+	glm::mat4 m_InverseProjectionMatrix{};
 };

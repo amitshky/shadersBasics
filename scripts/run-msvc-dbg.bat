@@ -1,2 +1,2 @@
 @echo off
-.\build\src\Debug\shadersBasics.exe
+.\build\msvc\src\Debug\shadersBasics.exe

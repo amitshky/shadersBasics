@@ -64,8 +64,8 @@ void Engine::Init(const char* title, const uint64_t width, const uint64_t height
 	CreateDescriptorSets();
 	CreatePipelineLayout();
 
-	CreatePipeline("assets/shaders/out/helloTriangle.vert.spv", "assets/shaders/out/helloTriangle.frag.spv");
-	// CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/shader.frag.spv");
+	// CreatePipeline("assets/shaders/out/helloTriangle.vert.spv", "assets/shaders/out/helloTriangle.frag.spv");
+	CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/shader.frag.spv");
 
 	CreateCommandBuffers();
 
@@ -128,11 +128,14 @@ void Engine::Run()
 	while (m_IsRunning)
 	{
 		float deltatime = CalcFps();
+		m_Camera->OnUpdate(deltatime);
+
 		Draw(deltatime);
+
 		ProcessInput();
 		m_Window->OnUpdate();
 
-		m_Camera->SetPosition(m_CameraPos);
+		m_Camera->SetPosition(m_CameraPos); // TODO: this is temporary, remove it
 	}
 }
 
@@ -151,7 +154,6 @@ void Engine::Draw(float deltatime)
 		nullptr);
 	vkCmdDraw(m_ActiveCommandBuffer, 6, 1, 0, 0);
 
-	m_Camera->OnUpdate(deltatime);
 	UpdateUniformBuffers();
 
 	OnUiRender();
@@ -170,6 +172,7 @@ void Engine::UpdateUniformBuffers()
 
 	ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	ubo.viewProj = m_Camera->GetViewProjectionMatrix();
+	ubo.cameraPos = m_Camera->GetPosition();
 
 	void* data = nullptr;
 	vkMapMemory(m_DeviceVk, m_UniformBufferMemory[m_CurrentFrameIndex], 0, sizeof(ubo), 0, &data);
