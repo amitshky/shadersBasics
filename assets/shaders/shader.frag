@@ -70,29 +70,6 @@ vec4 RayColor(const Ray r)
 
 void main()
 {
-	// float aspectRatio = ubo.resolution.x / ubo.resolution.y;
-	// float viewportHeight = 2.0;
-	// float viewportWidth = viewportHeight * aspectRatio;
-
-	// // camera
-	// float focalLength = 1.0;
-	// // vec3 cameraPos = vec3(0.0, 0.0, 0.0);
-
-	// // viewport vectors (horizontal and vertical)
-	// vec3 viewportU = vec3(viewportWidth, 0.0, 0.0);
-	// vec3 viewportV = vec3(0.0, -viewportHeight, 0.0);
-
-	// // pixel-to-pixel vectors
-	// vec3 pixelDeltaU = viewportU / ubo.resolution.x;
-	// vec3 pixelDeltaV = viewportV / ubo.resolution.y;
-
-	// // upper-left pixel
-	// vec3 viewportUpperLeft = ubo.cameraPos - vec3(0.0, 0.0, focalLength) - viewportU / 2 - viewportV / 2;
-	// // location of the center pixel of the upper left corner of the viewport
-	// vec3 pixelLoc = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
-
-	// vec3 pixelCenter = pixelLoc + (gl_FragCoord.x * pixelDeltaU) + (gl_FragCoord.y * pixelDeltaV);
-
 	vec2 coord = 2.0 * (gl_FragCoord.xy / ubo.resolution.xy) - 1.0;
 	vec3 pixel = vec3(coord, -1.0);
 	vec4 target = ubo.iProj * vec4(pixel, 1.0);

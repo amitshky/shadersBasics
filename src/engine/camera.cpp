@@ -37,7 +37,10 @@ void Camera::OnUpdate(float deltatime)
 	// if ImGui is in focus, don't take keyboard input for camera
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureKeyboard)
+	{
+		Input::SetCursorMode(CursorMode::NORMAL);
 		return;
+	}
 
 	if (!Input::IsMouseButtonPressed(Mouse::BUTTON_1))
 	{
@@ -49,14 +52,17 @@ void Camera::OnUpdate(float deltatime)
 
 	// movement
 	const float speed = 3.0f * (deltatime / 1000.0f);
+
 	if (Input::IsKeyPressed(Key::W)) // forward
 		m_Position += m_ForwardDirection * speed;
 	else if (Input::IsKeyPressed(Key::S)) // backward
 		m_Position -= m_ForwardDirection * speed;
+
 	if (Input::IsKeyPressed(Key::A)) // left
 		m_Position -= m_RightDirection * speed;
 	else if (Input::IsKeyPressed(Key::D)) // right
 		m_Position += m_RightDirection * speed;
+
 	if (Input::IsKeyPressed(Key::E)) // up
 		m_Position += m_UpDirection * speed;
 	else if (Input::IsKeyPressed(Key::Q)) // down
