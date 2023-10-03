@@ -17,7 +17,7 @@ public:
 	Shader(VkDevice deviceVk, const char* path, ShaderType type);
 	~Shader();
 
-	inline VkPipelineShaderStageCreateInfo GetShaderStage() const { return m_ShaderStage; }
+	[[nodiscard]] inline VkPipelineShaderStageCreateInfo GetShaderStage() const { return m_ShaderStage; }
 
 private:
 	void LoadShader();

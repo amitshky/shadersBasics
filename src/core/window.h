@@ -39,24 +39,22 @@ public:
 	void CreateWindowSurface(VkInstance vulkanInstance);
 	bool IsMinimized();
 
-	inline bool IsRunning() { return !glfwWindowShouldClose(m_WindowHandle); }
+	[[nodiscard]] inline bool IsRunning() { return !glfwWindowShouldClose(m_WindowHandle); }
 
-	inline uint32_t GetWidth() const { return m_Data.width; }
-	inline uint32_t GetHeight() const { return m_Data.height; }
+	[[nodiscard]] inline uint32_t GetWidth() const { return m_Data.width; }
+	[[nodiscard]] inline uint32_t GetHeight() const { return m_Data.height; }
 
-	inline GLFWwindow* GetWindowHandle() const { return m_WindowHandle; }
-	inline VkSurfaceKHR GetWindowSurface() const { return m_WindowSurface; }
+	[[nodiscard]] inline GLFWwindow* GetWindowHandle() const { return m_WindowHandle; }
+	[[nodiscard]] inline VkSurfaceKHR GetWindowSurface() const { return m_WindowSurface; }
 	inline void GetFramebufferSize(int* width, int* height) const
 	{
 		glfwGetFramebufferSize(m_WindowHandle, width, height);
 	}
-	static inline const char** GetRequiredVulkanExtensions(uint32_t* count)
+	[[nodiscard]] static inline const char** GetRequiredVulkanExtensions(uint32_t* count)
 	{
 		return glfwGetRequiredInstanceExtensions(count);
 	}
 	inline void WaitEvents() { glfwWaitEvents(); }
-	inline void HideCursor() { glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED); }
-	inline void ShowCursor() { glfwSetInputMode(m_WindowHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL); }
 
 	// set event callbacks
 	inline void SetCloseEventCallbackFn(const CloseEventCallbackFn& callback) { m_Data.CloseEventCallback = callback; }
