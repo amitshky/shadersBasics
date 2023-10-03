@@ -132,7 +132,6 @@ void Engine::Run()
 
 		Draw(deltatime);
 
-		ProcessInput();
 		m_Window->OnUpdate();
 	}
 }
@@ -836,25 +835,6 @@ void Engine::CreateSyncObjects()
 
 
 // event callbacks
-void Engine::ProcessInput()
-{
-	// forward input data to ImGui first
-	ImGuiIO& io = ImGui::GetIO();
-	if (io.WantCaptureMouse || io.WantCaptureKeyboard)
-		return;
-
-	// if (Input::IsMouseButtonPressed(Mouse::BUTTON_1))
-	// {
-	// 	// hide cursor when moving camera
-	// 	m_Window->HideCursor();
-	// }
-	// else if (Input::IsMouseButtonReleased(Mouse::BUTTON_1))
-	// {
-	// 	// unhide cursor when camera stops moving
-	// 	m_Window->ShowCursor();
-	// }
-}
-
 void Engine::OnCloseEvent()
 {
 	m_IsRunning = false;

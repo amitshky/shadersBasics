@@ -68,7 +68,6 @@ private:
 
 
 	// event callbacks
-	void ProcessInput();
 	void OnCloseEvent();
 	void OnResizeEvent(int width, int height);
 	void OnMouseMoveEvent(double xpos, double ypos);
