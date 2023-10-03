@@ -1,6 +1,7 @@
 #pragma once
 
 #include <utility>
+#include <glm/glm.hpp>
 #include "core/keyCodes.h"
 #include "core/mouseButtonCodes.h"
 
@@ -13,7 +14,9 @@ public:
 	static bool IsMouseButtonPressed(Mouse button);
 	static bool IsMouseButtonReleased(Mouse button);
 
-	static std::pair<float, float> GetMousePosition();
+	static void SetCursorMode(CursorMode mode);
+
+	static glm::vec2 GetMousePosition();
 	static float GetMouseX();
 	static float GetMouseY();
 };

@@ -94,7 +94,7 @@ void main()
 	// vec3 pixelCenter = pixelLoc + (gl_FragCoord.x * pixelDeltaU) + (gl_FragCoord.y * pixelDeltaV);
 
 	vec2 coord = 2.0 * (gl_FragCoord.xy / ubo.resolution.xy) - 1.0;
-	vec3 pixel = vec3(coord.x, -coord.y, -1.0);
+	vec3 pixel = vec3(coord, -1.0);
 	vec4 target = ubo.iProj * vec4(pixel, 1.0);
 	vec3 rayDir = normalize(vec3(ubo.iView * vec4(normalize(target.xyz / target.w), 0.0))); // world space
 

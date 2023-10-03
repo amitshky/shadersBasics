@@ -130,7 +130,7 @@ private:
 	std::vector<VkFence> m_InFlightFences;
 
 	std::unique_ptr<Camera> m_Camera;
-	glm::vec3 m_CameraPos{ 0.0f, 0.0f, 3.0f };
+	// glm::vec3 m_CameraPos{ 0.0f, 0.0f, 3.0f };
 
 	VkCommandBuffer m_ActiveCommandBuffer;
 	uint32_t m_CurrentFrameIndex = 0;

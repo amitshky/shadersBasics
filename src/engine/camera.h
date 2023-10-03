@@ -40,4 +40,6 @@ private:
 
 	glm::mat4 m_InverseViewMatrix{};
 	glm::mat4 m_InverseProjectionMatrix{};
+
+	glm::vec2 m_LastMousePosition{ 0.0f, 0.0f };
 };

@@ -7,32 +7,38 @@
 bool Input::IsKeyPressed(Key keycode)
 {
 	GLFWwindow* window = Engine::GetWindowHandle();
-	auto status = glfwGetKey(window, keycode);
+	auto status = glfwGetKey(window, static_cast<int>(keycode));
 	return status == GLFW_PRESS || status == GLFW_REPEAT;
 }
 
 bool Input::IsKeyReleased(Key keycode)
 {
 	GLFWwindow* window = Engine::GetWindowHandle();
-	auto status = glfwGetKey(window, keycode);
+	auto status = glfwGetKey(window, static_cast<int>(keycode));
 	return status == GLFW_RELEASE;
 }
 
 bool Input::IsMouseButtonPressed(Mouse button)
 {
 	GLFWwindow* window = Engine::GetWindowHandle();
-	auto status = glfwGetMouseButton(window, button);
+	auto status = glfwGetMouseButton(window, static_cast<int>(button));
 	return status == GLFW_PRESS;
 }
 
 bool Input::IsMouseButtonReleased(Mouse button)
 {
 	GLFWwindow* window = Engine::GetWindowHandle();
-	auto status = glfwGetMouseButton(window, button);
+	auto status = glfwGetMouseButton(window, static_cast<int>(button));
 	return status == GLFW_RELEASE;
 }
 
-std::pair<float, float> Input::GetMousePosition()
+void Input::SetCursorMode(CursorMode mode)
+{
+	GLFWwindow* window = Engine::GetWindowHandle();
+	glfwSetInputMode(window, GLFW_CURSOR, static_cast<int>(mode));
+}
+
+glm::vec2 Input::GetMousePosition()
 {
 	GLFWwindow* window = Engine::GetWindowHandle();
 	double xpos, ypos;
@@ -42,12 +48,12 @@ std::pair<float, float> Input::GetMousePosition()
 
 float Input::GetMouseX()
 {
-	auto [x, y] = Input::GetMousePosition();
-	return x;
+	auto pos = Input::GetMousePosition();
+	return pos.x;
 }
 
 float Input::GetMouseY()
 {
-	auto [x, y] = Input::GetMousePosition();
-	return y;
+	auto pos = Input::GetMousePosition();
+	return pos.y;
 }

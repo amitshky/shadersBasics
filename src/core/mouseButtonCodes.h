@@ -1,6 +1,6 @@
 #pragma once
 
-enum Mouse : int
+enum class Mouse
 {
 	// From glfw3.h
 	BUTTON_1 = 0,
@@ -15,4 +15,12 @@ enum Mouse : int
 	BUTTON_LEFT = BUTTON_1,
 	BUTTON_RIGHT = BUTTON_2,
 	BUTTON_MIDDLE = BUTTON_3,
+};
+
+enum class CursorMode
+{
+	NORMAL = 0x00034001,
+	HIDDEN = 0x00034002,
+	DISABLED = 0x00034003,
+	CAPTURED = 0x00034004,
 };

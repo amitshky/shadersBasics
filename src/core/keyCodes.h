@@ -2,7 +2,7 @@
 
 // From glfw3.h
 /* Printable keys */
-enum Key : int
+enum class Key
 {
 	SPACE = 32,
 	APOSTROPHE = 39, /* ' */

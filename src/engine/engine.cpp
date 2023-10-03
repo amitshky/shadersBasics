@@ -82,7 +82,7 @@ void Engine::Init(const char* title, const uint64_t width, const uint64_t height
 		Config::maxFramesInFlight);
 
 	m_Camera = std::make_unique<Camera>(
-		static_cast<float>(m_SwapchainExtent.width) / static_cast<float>(m_SwapchainExtent.height), m_CameraPos);
+		static_cast<float>(m_SwapchainExtent.width) / static_cast<float>(m_SwapchainExtent.height));
 }
 
 void Engine::Cleanup()
@@ -134,8 +134,6 @@ void Engine::Run()
 
 		ProcessInput();
 		m_Window->OnUpdate();
-
-		m_Camera->SetPosition(m_CameraPos); // TODO: this is temporary, remove it
 	}
 }
 
@@ -281,13 +279,13 @@ void Engine::OnUiRender()
 	ImGui::Text("%.2f ms/frame (%d fps)", (1000.0f / m_LastFps), m_LastFps);
 	ImGui::End();
 
-	ImGui::Begin("Settings");
-	ImGui::DragFloat3("Camera Position###cameraPos", glm::value_ptr(m_CameraPos));
-	ImGui::End();
-
 	ImGuiOverlay::End(m_ActiveCommandBuffer);
 }
 
+/**
+ * Calculates FPS
+ * @returns deltatime in milliseconds
+ */
 float Engine::CalcFps()
 {
 	++m_FrameCounter;
