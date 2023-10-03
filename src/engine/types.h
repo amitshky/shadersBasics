@@ -104,9 +104,11 @@ struct hash<Vertex>
 
 struct UniformBufferObject
 {
-	alignas(16) glm::vec3 iResolution;
-	alignas(4) float iTime;
+	alignas(16) glm::vec3 resolution;
+	alignas(4) float time;
+	alignas(16) glm::vec3 cameraPos;
 	alignas(16) glm::mat4 model;
 	alignas(16) glm::mat4 viewProj;
-	alignas(16) glm::vec3 cameraPos;
+	alignas(16) glm::mat4 iView; // inverse view matrix
+	alignas(16) glm::mat4 iProj; // inverse projection matrix
 };

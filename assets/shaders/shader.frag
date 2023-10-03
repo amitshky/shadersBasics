@@ -2,11 +2,13 @@
 
 layout(binding = 0) uniform UniformBufferObject
 {
-	vec3 iResolution;
-	float iTime;
+	vec3 resolution;
+	float time;
+	vec3 cameraPos;
 	mat4 model;
 	mat4 viewProj;
-	vec3 cameraPos;
+	mat4 iView;
+	mat4 iProj;
 }
 ubo;
 
@@ -68,29 +70,33 @@ vec4 RayColor(const Ray r)
 
 void main()
 {
-	float aspectRatio = ubo.iResolution.x / ubo.iResolution.y;
-	float viewportHeight = 2.0;
-	float viewportWidth = viewportHeight * aspectRatio;
+	// float aspectRatio = ubo.resolution.x / ubo.resolution.y;
+	// float viewportHeight = 2.0;
+	// float viewportWidth = viewportHeight * aspectRatio;
 
-	// camera
-	float focalLength = 1.0;
-	// vec3 cameraPos = vec3(0.0, 0.0, 0.0);
+	// // camera
+	// float focalLength = 1.0;
+	// // vec3 cameraPos = vec3(0.0, 0.0, 0.0);
 
-	// viewport vectors (horizontal and vertical)
-	vec3 viewportU = vec3(viewportWidth, 0.0, 0.0);
-	vec3 viewportV = vec3(0.0, -viewportHeight, 0.0);
+	// // viewport vectors (horizontal and vertical)
+	// vec3 viewportU = vec3(viewportWidth, 0.0, 0.0);
+	// vec3 viewportV = vec3(0.0, -viewportHeight, 0.0);
 
-	// pixel-to-pixel vectors
-	vec3 pixelDeltaU = viewportU / ubo.iResolution.x;
-	vec3 pixelDeltaV = viewportV / ubo.iResolution.y;
+	// // pixel-to-pixel vectors
+	// vec3 pixelDeltaU = viewportU / ubo.resolution.x;
+	// vec3 pixelDeltaV = viewportV / ubo.resolution.y;
 
-	// upper-left pixel
-	vec3 viewportUpperLeft = ubo.cameraPos - vec3(0.0, 0.0, focalLength) - viewportU / 2 - viewportV / 2;
-	// location of the center pixel of the upper left corner of the viewport
-	vec3 pixelLoc = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
+	// // upper-left pixel
+	// vec3 viewportUpperLeft = ubo.cameraPos - vec3(0.0, 0.0, focalLength) - viewportU / 2 - viewportV / 2;
+	// // location of the center pixel of the upper left corner of the viewport
+	// vec3 pixelLoc = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
 
-	vec3 pixelCenter = pixelLoc + (gl_FragCoord.x * pixelDeltaU) + (gl_FragCoord.y * pixelDeltaV);
-	vec3 rayDir = pixelCenter - ubo.cameraPos;
+	// vec3 pixelCenter = pixelLoc + (gl_FragCoord.x * pixelDeltaU) + (gl_FragCoord.y * pixelDeltaV);
+
+	vec2 coord = 2.0 * (gl_FragCoord.xy / ubo.resolution.xy) - 1.0;
+	vec3 pixel = vec3(coord.x, -coord.y, -1.0);
+	vec4 target = ubo.iProj * vec4(pixel, 1.0);
+	vec3 rayDir = normalize(vec3(ubo.iView * vec4(normalize(target.xyz / target.w), 0.0))); // world space
 
 	Ray ray = Ray(ubo.cameraPos, rayDir);
 	outColor = RayColor(ray);

@@ -73,3 +73,5 @@ imgui.ini
 binaries/*
 
 renderdoc/*
+
+compile_commands.json

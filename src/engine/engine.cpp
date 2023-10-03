@@ -167,12 +167,14 @@ void Engine::UpdateUniformBuffers()
 	std::chrono::time_point<std::chrono::high_resolution_clock> currentTime = std::chrono::high_resolution_clock::now();
 
 	UniformBufferObject ubo{};
-	ubo.iResolution = glm::vec3(m_SwapchainExtent.width, m_SwapchainExtent.height, 0.0f);
-	ubo.iTime = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
+	ubo.resolution = glm::vec3(m_SwapchainExtent.width, m_SwapchainExtent.height, 0.0f);
+	ubo.time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
+	ubo.cameraPos = m_Camera->GetPosition();
 	ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 	ubo.viewProj = m_Camera->GetViewProjectionMatrix();
-	ubo.cameraPos = m_Camera->GetPosition();
+	ubo.iView = m_Camera->GetInverseViewMatrix();
+	ubo.iProj = m_Camera->GetInverseProjectionMatrix();
 
 	void* data = nullptr;
 	vkMapMemory(m_DeviceVk, m_UniformBufferMemory[m_CurrentFrameIndex], 0, sizeof(ubo), 0, &data);

@@ -2,11 +2,13 @@
 
 layout(binding = 0) uniform UniformBufferObject
 {
-	vec3 iResolution;
-	float iTime;
+	vec3 resolution;
+	float time;
+	vec3 cameraPos;
 	mat4 model;
 	mat4 viewProj;
-	vec3 cameraPos;
+	mat4 iView;
+	mat4 iProj;
 }
 ubo;
 
