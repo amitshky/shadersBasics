@@ -1,5 +1,5 @@
 # shadersBasics
-
+A playground to try out shaders.
 
 ## Prerequisites
 * [CMake](https://cmake.org/download/)
@@ -53,15 +53,15 @@ python format.py
 * E and Q to move the camera up and down.
 <!-- * R to reset the camera -->
 * Ctrl+Q to close the window
-* Left click and drag the mouse to move the camera
+* Left-click and drag the mouse to move the camera
 
 
 ## Screenshots
 
-Ray traced sphere (showing normal vectors) (checkout `1a06bd90981ac5c1deb4b24de918bd681daf4069`) (ref: [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html))\
+Ray-traced sphere (showing normal vectors) (checkout `1a06bd90981ac5c1deb4b24de918bd681daf4069`) (ref: [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html))\
 <img src="img/normalVectorsSphere.png" width=500>
 
-Ray traced sphere (checkout `5574e973685c9504c7081f52b86a2e9d48fac18a`) (ref: [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html))\
+Ray-traced sphere (checkout `5574e973685c9504c7081f52b86a2e9d48fac18a`) (ref: [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html))\
 <img src="img/firstSphere.png" width=500>
 
 checkout `1e78f83db5289800e632ff72ecaf2ef0daca815c` (ref: [An introduction to Shader Art Coding - kishimisu](https://youtu.be/f4s1h2YETNY))\
