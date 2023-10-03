@@ -168,10 +168,10 @@ void Engine::UpdateUniformBuffers()
 	ubo.time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	ubo.cameraPos = m_Camera->GetPosition();
-	ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -0.2f));
 	ubo.viewProj = m_Camera->GetViewProjectionMatrix();
-	ubo.iView = m_Camera->GetInverseViewMatrix();
-	ubo.iProj = m_Camera->GetInverseProjectionMatrix();
+	ubo.invView = m_Camera->GetInverseViewMatrix();
+	ubo.invProj = m_Camera->GetInverseProjectionMatrix();
 
 	void* data = nullptr;
 	vkMapMemory(m_DeviceVk, m_UniformBufferMemory[m_CurrentFrameIndex], 0, sizeof(ubo), 0, &data);

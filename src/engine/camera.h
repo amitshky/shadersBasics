@@ -5,9 +5,16 @@
 class Camera
 {
 public:
+	/**
+	 * @param aspectRatio width / height
+	 * @param position world position of the camera (default = (0.0, 0.0, 3.0))
+	 * @param yFov vertical Field Of View (FOV) in degrees (default = 45)
+	 * @param zNear near clip plane in z axis (default = 0.01 units)
+	 * @param zFar far clip plane in z axis (default = 100.0 units)
+	 */
 	explicit Camera(float aspectRatio,
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f),
-		float yFov = glm::radians(45.0f),
+		float yFov = 60.0f,
 		float zNear = 0.01f,
 		float zFar = 100.0f);
 

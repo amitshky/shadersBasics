@@ -7,11 +7,12 @@ layout(binding = 0) uniform UniformBufferObject
 	vec3 cameraPos;
 	mat4 model;
 	mat4 viewProj;
-	mat4 iView;
-	mat4 iProj;
+	mat4 invView;
+	mat4 invProj;
 }
 ubo;
 
+layout(location = 0) in vec3 inPosition;
 layout(location = 0) out vec4 outColor;
 
 struct Ray
@@ -70,10 +71,9 @@ vec4 RayColor(const Ray r)
 
 void main()
 {
-	vec2 coord = 2.0 * (gl_FragCoord.xy / ubo.resolution.xy) - 1.0;
-	vec3 pixel = vec3(coord, -1.0);
-	vec4 target = ubo.iProj * vec4(pixel, 1.0);
-	vec3 rayDir = normalize(vec3(ubo.iView * vec4(normalize(target.xyz / target.w), 0.0))); // world space
+	vec3 pixelPos = inPosition; // normalized device coordinates
+	vec4 target = ubo.invProj * vec4(pixelPos, 1.0); // view space
+	vec3 rayDir = normalize(vec3(ubo.invView * vec4(normalize(target.xyz / target.w), 0.0))); // world space
 
 	Ray ray = Ray(ubo.cameraPos, rayDir);
 	outColor = RayColor(ray);

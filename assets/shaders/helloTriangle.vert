@@ -7,8 +7,8 @@ layout(binding = 0) uniform UniformBufferObject
 	vec3 cameraPos;
 	mat4 model;
 	mat4 viewProj;
-	mat4 iView;
-	mat4 iProj;
+	mat4 invView;
+	mat4 invProj;
 }
 ubo;
 

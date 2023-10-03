@@ -6,10 +6,11 @@
 #include "imgui/imgui.h"
 #include "core/input.h"
 
+
 Camera::Camera(float aspectRatio, glm::vec3 position, float yFov, float zNear, float zFar)
 	: m_AspectRatio{ aspectRatio },
 	  m_Position{ position },
-	  m_FOVy{ yFov },
+	  m_FOVy{ glm::radians(yFov) },
 	  m_Near{ zNear },
 	  m_Far{ zFar },
 	  m_ForwardDirection{ 0.0f, 0.0f, -1.0f },
@@ -74,8 +75,8 @@ void Camera::OnUpdate(float deltatime)
 		float pitchDelta = deltaMousePos.y * 0.3f;
 		float yawDelta = deltaMousePos.x * 0.3f;
 
-		glm::quat quaternion = glm::normalize(glm::cross(
-			glm::angleAxis(-pitchDelta, m_RightDirection), glm::angleAxis(-yawDelta, glm::vec3(0.0f, 1.0f, 0.0f))));
+		glm::quat quaternion = glm::normalize(
+			glm::cross(glm::angleAxis(-pitchDelta, m_RightDirection), glm::angleAxis(-yawDelta, m_UpDirection)));
 		m_ForwardDirection = glm::rotate(quaternion, m_ForwardDirection);
 	}
 }
