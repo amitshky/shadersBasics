@@ -48,6 +48,7 @@ python format.py
 ```
 
 
+## Usage
 * Left-click and drag the mouse to move the camera
 * Left-click and WASD to move the camera forward, left, back, and right respectively.
 * Left-click and E and Q to move the camera up and down.
