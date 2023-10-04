@@ -78,4 +78,6 @@ checkout `735f770a3fcfca2b98da81e2a32400ecbdd55bd2`\
 * [Sascha Willems examples](https://github.com/SaschaWillems/Vulkan)
 * [vkguide.dev](https://vkguide.dev/)
 * [An introduction to Shader Art Coding - kishimisu](https://youtu.be/f4s1h2YETNY)
+* [Intro to Graphics - Cem Yuksel](https://www.youtube.com/playlist?list=PLplnkTzzqsZTfYh4UbhLGpI5kGd5oW_Hh)
 * [Ray Tracing in One Weekend - Peter Shirley](https://raytracing.github.io/books/RayTracingInOneWeekend.html)
+* [Ray Tracing Series - The Cherno](https://www.youtube.com/playlist?list=PLlrATfBNZ98edc5GshdBtREv5asFW3yXl)
