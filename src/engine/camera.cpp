@@ -15,7 +15,13 @@ Camera::Camera(float aspectRatio, glm::vec3 position, float yFov, float zNear, f
 	  m_Far{ zFar },
 	  m_ForwardDirection{ 0.0f, 0.0f, -1.0f },
 	  m_RightDirection{ 1.0f, 0.0f, 0.0f },
-	  m_UpDirection{ 0.0f, 1.0f, 0.0f }
+	  m_UpDirection{ 0.0f, 1.0f, 0.0f },
+	  m_BackupPosition{ position },
+	  m_BackupFOVy{ glm::radians(yFov) },
+	  m_BackupNear{ zNear },
+	  m_BackupFar{ zFar },
+	  m_BackupForwardDirection{ m_ForwardDirection },
+	  m_BackupRightDirection{ m_RightDirection }
 {}
 
 void Camera::OnUpdate(float deltatime)
@@ -43,6 +49,16 @@ void Camera::OnUpdate(float deltatime)
 		return;
 	}
 
+	if (Input::IsKeyPressed(Key::R))
+	{
+		m_Position = m_BackupPosition;
+		m_FOVy = m_BackupFOVy;
+		m_Near = m_BackupNear;
+		m_Far = m_BackupFar;
+		m_ForwardDirection = m_BackupForwardDirection;
+		m_RightDirection = m_BackupRightDirection;
+	}
+
 	if (!Input::IsMouseButtonPressed(Mouse::BUTTON_1))
 	{
 		Input::SetCursorMode(CursorMode::NORMAL);
@@ -52,7 +68,7 @@ void Camera::OnUpdate(float deltatime)
 	Input::SetCursorMode(CursorMode::DISABLED);
 
 	// movement
-	const float speed = 3.0f * (deltatime / 1000.0f);
+	const float speed = 2.5f * (deltatime / 1000.0f);
 
 	if (Input::IsKeyPressed(Key::W)) // forward
 		m_Position += m_ForwardDirection * speed;
@@ -72,8 +88,8 @@ void Camera::OnUpdate(float deltatime)
 	// rotation
 	if (deltaMousePos.x != 0.0f || deltaMousePos.y != 0.0f)
 	{
-		float pitchDelta = deltaMousePos.y * 0.3f;
-		float yawDelta = deltaMousePos.x * 0.3f;
+		float pitchDelta = deltaMousePos.y * 0.15f;
+		float yawDelta = deltaMousePos.x * 0.15f;
 
 		glm::quat quaternion = glm::normalize(
 			glm::cross(glm::angleAxis(-pitchDelta, m_RightDirection), glm::angleAxis(-yawDelta, m_UpDirection)));

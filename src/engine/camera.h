@@ -13,8 +13,8 @@ public:
 	 * @param zFar far clip plane in z axis (default = 100.0 units)
 	 */
 	explicit Camera(float aspectRatio,
-		glm::vec3 position = glm::vec3(0.0f, 0.0f, 3.0f),
-		float yFov = 60.0f,
+		glm::vec3 position = glm::vec3(0.0f, 0.0f, 1.0f),
+		float yFov = 15.0f,
 		float zNear = 0.01f,
 		float zFar = 100.0f);
 
@@ -49,4 +49,12 @@ private:
 	glm::mat4 m_InverseProjectionMatrix{};
 
 	glm::vec2 m_LastMousePosition{ 0.0f, 0.0f };
+
+	// for resetting the camera
+	const glm::vec3 m_BackupPosition;
+	const float m_BackupFOVy;
+	const float m_BackupNear;
+	const float m_BackupFar;
+	const glm::vec3 m_BackupForwardDirection;
+	const glm::vec3 m_BackupRightDirection;
 };
