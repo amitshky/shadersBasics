@@ -26,7 +26,13 @@ vec3 RayAt(const Ray r, float t)
 	return r.origin + t * r.direction;
 }
 
-float HitSphere(const vec3 center, const float radius, const Ray r)
+struct Sphere
+{
+	vec3 center;
+	float radius;
+};
+
+float HitSphere(const Sphere sphere, const Ray r)
 {
 	// in the quadriatic equation
 	// a = dir . dir
@@ -36,10 +42,10 @@ float HitSphere(const vec3 center, const float radius, const Ray r)
 	// (-h +- sqrt(h^2 - ac))/a
 	// h = b / 2
 	// NOTE: the dot product of itself can be replaced with length squared
-	vec3 originToCenter = r.origin - center;
+	vec3 originToCenter = r.origin - sphere.center;
 	float a = dot(r.direction, r.direction);
 	float h = dot(r.direction, originToCenter);
-	float c = dot(originToCenter, originToCenter) - radius * radius;
+	float c = dot(originToCenter, originToCenter) - sphere.radius * sphere.radius;
 
 	float discriminant = h * h - a * c;
 
@@ -52,14 +58,13 @@ float HitSphere(const vec3 center, const float radius, const Ray r)
 
 vec4 RayColor(const Ray r)
 {
-	vec3 sphereCenter = vec3(0.0, 0.0, -1.0);
-	float sphereRadius = 0.5;
+	Sphere sphere = Sphere(vec3(0.0, 0.0, -1.0), 0.5);
 
-	float t = HitSphere(sphereCenter, sphereRadius, r);
+	float t = HitSphere(sphere, r);
 	if (t > 0.0)
 	{
 		// calc normal
-		vec3 normal = normalize(RayAt(r, t) - sphereCenter);
+		vec3 normal = normalize(RayAt(r, t) - sphere.center);
 		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
 	}
 
@@ -67,7 +72,6 @@ vec4 RayColor(const Ray r)
 	float a = 0.5 * (dir.y + 1.0);
 	return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
 }
-
 
 void main()
 {

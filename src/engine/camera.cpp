@@ -67,7 +67,6 @@ void Camera::OnUpdate(float deltatime)
 	// movement
 	const float speed = 2.5f * (deltatime / 1000.0f);
 	m_RightDirection = glm::cross(m_ForwardDirection, m_UpDirection);
-	m_UpDirection = glm::cross(m_RightDirection, m_ForwardDirection);
 
 	if (Input::IsKeyPressed(Key::W)) // forward
 		m_Position += m_ForwardDirection * speed;
@@ -80,9 +79,15 @@ void Camera::OnUpdate(float deltatime)
 		m_Position += m_RightDirection * speed;
 
 	if (Input::IsKeyPressed(Key::E)) // up
+	{
+		m_UpDirection = glm::cross(m_RightDirection, m_ForwardDirection);
 		m_Position += m_UpDirection * speed;
+	}
 	else if (Input::IsKeyPressed(Key::Q)) // down
+	{
+		m_UpDirection = glm::cross(m_RightDirection, m_ForwardDirection);
 		m_Position -= m_UpDirection * speed;
+	}
 
 	// rotation
 	if (deltaMousePos.x != 0.0f || deltaMousePos.y != 0.0f)
