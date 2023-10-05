@@ -14,7 +14,7 @@ public:
 	 */
 	explicit Camera(float aspectRatio,
 		glm::vec3 position = glm::vec3(0.0f, 0.0f, 1.0f),
-		float yFov = 15.0f,
+		float yFov = 45.0f,
 		float zNear = 0.01f,
 		float zFar = 100.0f);
 
