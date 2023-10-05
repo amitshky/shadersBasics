@@ -57,4 +57,5 @@ private:
 	const float m_BackupFar;
 	const glm::vec3 m_BackupForwardDirection;
 	const glm::vec3 m_BackupRightDirection;
+	const glm::vec3 m_BackupUpDirection;
 };

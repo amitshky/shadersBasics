@@ -21,7 +21,8 @@ Camera::Camera(float aspectRatio, glm::vec3 position, float yFov, float zNear, f
 	  m_BackupNear{ zNear },
 	  m_BackupFar{ zFar },
 	  m_BackupForwardDirection{ m_ForwardDirection },
-	  m_BackupRightDirection{ m_RightDirection }
+	  m_BackupRightDirection{ m_RightDirection },
+	  m_BackupUpDirection{ m_UpDirection }
 {}
 
 void Camera::OnUpdate(float deltatime)
@@ -29,8 +30,6 @@ void Camera::OnUpdate(float deltatime)
 	glm::vec2 mousePos = Input::GetMousePosition();
 	glm::vec2 deltaMousePos = (mousePos - m_LastMousePosition) * 0.01f;
 	m_LastMousePosition = mousePos;
-
-	m_RightDirection = glm::cross(m_ForwardDirection, m_UpDirection);
 
 	// calc matrices
 	m_ViewMatrix = glm::lookAt(m_Position, m_Position + m_ForwardDirection, m_UpDirection);
@@ -43,11 +42,8 @@ void Camera::OnUpdate(float deltatime)
 
 	// if ImGui is in focus, don't take keyboard input for camera
 	ImGuiIO& io = ImGui::GetIO();
-	if (io.WantCaptureKeyboard)
-	{
-		Input::SetCursorMode(CursorMode::NORMAL);
+	if (io.WantCaptureKeyboard || io.WantCaptureMouse)
 		return;
-	}
 
 	if (Input::IsKeyPressed(Key::R))
 	{
@@ -57,6 +53,7 @@ void Camera::OnUpdate(float deltatime)
 		m_Far = m_BackupFar;
 		m_ForwardDirection = m_BackupForwardDirection;
 		m_RightDirection = m_BackupRightDirection;
+		m_UpDirection = m_BackupUpDirection;
 	}
 
 	if (!Input::IsMouseButtonPressed(Mouse::BUTTON_1))
@@ -69,6 +66,8 @@ void Camera::OnUpdate(float deltatime)
 
 	// movement
 	const float speed = 2.5f * (deltatime / 1000.0f);
+	m_RightDirection = glm::cross(m_ForwardDirection, m_UpDirection);
+	m_UpDirection = glm::cross(m_RightDirection, m_ForwardDirection);
 
 	if (Input::IsKeyPressed(Key::W)) // forward
 		m_Position += m_ForwardDirection * speed;
