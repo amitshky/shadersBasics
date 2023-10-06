@@ -65,7 +65,8 @@ void Engine::Init(const char* title, const uint64_t width, const uint64_t height
 	CreatePipelineLayout();
 
 	// CreatePipeline("assets/shaders/out/helloTriangle.vert.spv", "assets/shaders/out/helloTriangle.frag.spv");
-	CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/shader.frag.spv");
+	// CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/shader.frag.spv");
+	CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/random.frag.spv");
 
 	CreateCommandBuffers();
 
