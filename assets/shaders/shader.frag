@@ -9,11 +9,50 @@ layout(binding = 0) uniform UniformBufferObject
 	mat4 viewProj;
 	mat4 invView;
 	mat4 invProj;
+	mat4 invViewProj;
 }
 ubo;
 
 layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inRayDir;
+
 layout(location = 0) out vec4 outColor;
+
+const int MAX_SAMPLES = 10;
+
+
+// ---------------------------------------
+
+// random number generator
+// https://www.shadertoy.com/view/Xt3cDn
+uint baseHash(uvec2 p)
+{
+	p = 1103515245U * ((p >> 1U) ^ (p.yx));
+	uint h32 = 1103515245U * ((p.x) ^ (p.y >> 3U));
+	return h32 ^ (h32 >> 16);
+}
+
+float hash12(vec2 x)
+{
+	uint n = baseHash(floatBitsToUint(x));
+	return float(n) * (1.0 / float(0xffffffffU));
+}
+
+vec2 hash22(vec2 x)
+{
+	uint n = baseHash(floatBitsToUint(x));
+	uvec2 rz = uvec2(n, n * 48271U);
+	return vec2((rz.xy >> 1) & uvec2(0x7fffffffU)) / float(0x7fffffff);
+}
+
+vec3 hash32(vec2 x)
+{
+	uint n = baseHash(floatBitsToUint(x));
+	uvec3 rz = uvec3(n, n * 16807U, n * 48271U);
+	return vec3((rz >> 1) & uvec3(0x7fffffffU)) / float(0x7fffffff);
+}
+
+// ---------------------------------------
 
 struct Ray
 {
@@ -39,8 +78,7 @@ float HitSphere(const Sphere sphere, const Ray r)
 	// b = 2 * (dir . (org - center))
 	// c = org . org - radius^2
 	// replace b = 2h in quadriatic equation
-	// (-h +- sqrt(h^2 - ac))/a
-	// h = b / 2
+	// (-h +- sqrt(h^2 - ac)) / a
 	// NOTE: the dot product of itself can be replaced with length squared
 	vec3 originToCenter = r.origin - sphere.center;
 	float a = dot(r.direction, r.direction);
@@ -75,10 +113,14 @@ vec4 RayColor(const Ray r)
 
 void main()
 {
-	vec3 pixelPos = inPosition; // normalized device coordinates
-	vec4 target = ubo.invProj * vec4(pixelPos, 1.0); // view space
-	vec3 rayDir = normalize(vec3(ubo.invView * vec4(normalize(target.xyz / target.w), 0.0))); // world space
+	vec4 color = vec4(0.0);
 
-	Ray ray = Ray(ubo.cameraPos, rayDir);
-	outColor = RayColor(ray);
+	for (int i = 0; i < MAX_SAMPLES; ++i)
+	{
+		vec3 rayDir = normalize(inRayDir + hash32(inPosition.xy * ubo.time));
+		Ray ray = Ray(ubo.cameraPos, rayDir);
+		color += RayColor(ray);
+	}
+
+	outColor = color / float(MAX_SAMPLES);
 }

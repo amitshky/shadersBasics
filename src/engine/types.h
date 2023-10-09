@@ -111,4 +111,5 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 viewProj;
 	alignas(16) glm::mat4 invView; // inverse view matrix
 	alignas(16) glm::mat4 invProj; // inverse projection matrix
+	alignas(16) glm::mat4 invViewProj; // inverse view-projection matrix
 };

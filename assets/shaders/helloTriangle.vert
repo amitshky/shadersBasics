@@ -9,6 +9,7 @@ layout(binding = 0) uniform UniformBufferObject
 	mat4 viewProj;
 	mat4 invView;
 	mat4 invProj;
+	mat4 invViewProj;
 }
 ubo;
 

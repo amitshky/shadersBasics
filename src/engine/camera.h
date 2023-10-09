@@ -26,6 +26,7 @@ public:
 	[[nodiscard]] inline glm::mat4 GetProjectionMatrix() const { return m_ProjectionMatrix; }
 	[[nodiscard]] inline glm::mat4 GetInverseProjectionMatrix() const { return m_InverseProjectionMatrix; }
 	[[nodiscard]] inline glm::mat4 GetViewProjectionMatrix() const { return m_ViewProjectionMatrix; }
+	[[nodiscard]] inline glm::mat4 GetInverseViewProjectionMatrix() const { return m_InverseViewProjectionMatrix; }
 
 	void SetAspectRatio(float aspectRatio) { m_AspectRatio = aspectRatio; }
 	void SetPosition(glm::vec3 position) { m_Position = position; }
@@ -47,6 +48,7 @@ private:
 
 	glm::mat4 m_InverseViewMatrix{};
 	glm::mat4 m_InverseProjectionMatrix{};
+	glm::mat4 m_InverseViewProjectionMatrix{};
 
 	glm::vec2 m_LastMousePosition{ 0.0f, 0.0f };
 

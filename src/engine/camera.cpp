@@ -39,6 +39,7 @@ void Camera::OnUpdate(float deltatime)
 
 	m_InverseViewMatrix = glm::inverse(m_ViewMatrix);
 	m_InverseProjectionMatrix = glm::inverse(m_ProjectionMatrix);
+	m_InverseViewProjectionMatrix = glm::inverse(m_ViewProjectionMatrix);
 
 	// if ImGui is in focus, don't take keyboard input for camera
 	ImGuiIO& io = ImGui::GetIO();

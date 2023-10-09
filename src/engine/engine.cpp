@@ -64,9 +64,9 @@ void Engine::Init(const char* title, const uint64_t width, const uint64_t height
 	CreateDescriptorSets();
 	CreatePipelineLayout();
 
+	CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/shader.frag.spv");
 	// CreatePipeline("assets/shaders/out/helloTriangle.vert.spv", "assets/shaders/out/helloTriangle.frag.spv");
-	// CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/shader.frag.spv");
-	CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/random.frag.spv");
+	// CreatePipeline("assets/shaders/out/shader.vert.spv", "assets/shaders/out/random.frag.spv");
 
 	CreateCommandBuffers();
 
@@ -173,6 +173,7 @@ void Engine::UpdateUniformBuffers()
 	ubo.viewProj = m_Camera->GetViewProjectionMatrix();
 	ubo.invView = m_Camera->GetInverseViewMatrix();
 	ubo.invProj = m_Camera->GetInverseProjectionMatrix();
+	ubo.invViewProj = m_Camera->GetInverseViewProjectionMatrix();
 
 	void* data = nullptr;
 	vkMapMemory(m_DeviceVk, m_UniformBufferMemory[m_CurrentFrameIndex], 0, sizeof(ubo), 0, &data);
