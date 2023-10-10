@@ -18,13 +18,16 @@ layout(location = 1) in vec3 inRayDir;
 
 layout(location = 0) out vec4 outColor;
 
-const int MAX_SAMPLES = 10;
+const int MAX_SAMPLES = 32;
+const float PI = 3.14159265359;
 
 
 // ---------------------------------------
 
 // random number generator
 // https://www.shadertoy.com/view/Xt3cDn
+// https://www.shadertoy.com/view/tl23Rm
+// https://www.shadertoy.com/view/7tBXDh
 uint baseHash(uvec2 p)
 {
 	p = 1103515245U * ((p >> 1U) ^ (p.yx));
@@ -50,6 +53,47 @@ vec3 hash32(vec2 x)
 	uint n = baseHash(floatBitsToUint(x));
 	uvec3 rz = uvec3(n, n * 16807U, n * 48271U);
 	return vec3((rz >> 1) & uvec3(0x7fffffffU)) / float(0x7fffffff);
+}
+
+vec3 randRange3(float minVal, float maxVal)
+{
+	return minVal + (maxVal - minVal) * hash32(inPosition.xy * ubo.time);
+}
+
+vec3 randUnitSphere(vec2 p)
+{
+	vec3 rand = hash32(p);
+	float phi = 2.0 * PI * rand.x;
+	float cosTheta = 2.0 * rand.y - 1.0;
+	float u = rand.z;
+
+	float theta = acos(cosTheta);
+	float r = pow(u, 1.0 / 3.0);
+
+	float x = r * sin(theta) * cos(phi);
+	float y = r * sin(theta) * sin(phi);
+	float z = r * cos(theta);
+
+	return vec3(x, y, z);
+}
+
+vec3 randUnitVector(vec2 p)
+{
+	return normalize(randUnitSphere(p));
+}
+
+vec3 randUnitDisk(vec2 p)
+{
+	return vec3(randUnitSphere(p).xy, 0);
+}
+
+vec3 randHemisphere(const vec3 normal)
+{
+	vec3 onSphere = randUnitVector(normal.xy);
+	if (dot(onSphere, normal) > 0.0)
+		return onSphere;
+
+	return -onSphere;
 }
 
 // ---------------------------------------
@@ -94,15 +138,42 @@ float HitSphere(const Sphere sphere, const Ray r)
 	return (-h - sqrt(discriminant)) / a;
 }
 
+struct Plane
+{
+	vec3 normal;
+	float yIntercept;
+};
+
+float HitPlane(const Plane plane, const Ray r)
+{
+	float numerator = plane.yIntercept - dot(r.origin, plane.normal);
+	float denominator = dot(r.direction, plane.normal);
+
+	if (denominator == 0.0)
+		return -1.0;
+
+	return numerator / denominator;
+}
+
 vec4 RayColor(const Ray r)
 {
 	Sphere sphere = Sphere(vec3(0.0, 0.0, -1.0), 0.5);
+	Plane plane = Plane(vec3(0.0, 1.0, 0.0), -sphere.radius - 0.001);
 
 	float t = HitSphere(sphere, r);
 	if (t > 0.0)
 	{
 		// calc normal
 		vec3 normal = normalize(RayAt(r, t) - sphere.center);
+		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+	}
+
+	t = HitPlane(plane, r);
+	if (t > 0.0)
+	{
+		// calc normal
+		// vec3 normal = normalize(RayAt(r, t) - sphere.center);
+		vec3 normal = plane.normal;
 		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
 	}
 
@@ -117,8 +188,11 @@ void main()
 
 	for (int i = 0; i < MAX_SAMPLES; ++i)
 	{
-		vec3 rayDir = normalize(inRayDir + hash32(inPosition.xy * ubo.time));
-		Ray ray = Ray(ubo.cameraPos, rayDir);
+		vec2 p = inPosition.xy * ubo.time;
+		vec3 rayDir = normalize(inRayDir + hash32(p));
+		vec3 origin = ubo.cameraPos;
+
+		Ray ray = Ray(origin, rayDir);
 		color += RayColor(ray);
 	}
 
