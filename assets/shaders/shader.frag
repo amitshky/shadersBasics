@@ -37,12 +37,20 @@ uint baseHash(uvec2 p)
 	return h32 ^ (h32 >> 16);
 }
 
+/**
+ * @param x vec2 to generate random number
+ * @returns random float
+ */
 float hash12(vec2 x)
 {
 	uint n = baseHash(floatBitsToUint(x));
 	return float(n) * (1.0 / float(0xffffffffU));
 }
 
+/**
+ * @param x vec2 to generate random number
+ * @returns random vec2
+ */
 vec2 hash22(vec2 x)
 {
 	uint n = baseHash(floatBitsToUint(x));
@@ -50,6 +58,10 @@ vec2 hash22(vec2 x)
 	return vec2((rz.xy >> 1) & uvec2(0x7fffffffU)) / float(0x7fffffff);
 }
 
+/**
+ * @param x vec2 to generate random number
+ * @returns random vec3
+ */
 vec3 hash32(vec2 x)
 {
 	uint n = baseHash(floatBitsToUint(x));
@@ -57,11 +69,21 @@ vec3 hash32(vec2 x)
 	return vec3((rz >> 1) & uvec3(0x7fffffffU)) / float(0x7fffffff);
 }
 
+/**
+ * gernerates a random values within the range [min, max)
+ * @param minVal min value of the range
+ * @param maxVal max value of the range
+ * @returns random vec3
+ */
 vec3 randRange3(float minVal, float maxVal)
 {
 	return minVal + (maxVal - minVal) * hash32(inPosition.xy * ubo.time);
 }
 
+/**
+ * @param p vec2 to generate random number
+ * @returns random vec3 within a unit sphere
+ */
 vec3 randUnitSphere(vec2 p)
 {
 	vec3 rand = hash32(p);
@@ -79,16 +101,28 @@ vec3 randUnitSphere(vec2 p)
 	return vec3(x, y, z);
 }
 
+/**
+ * @param x vec2 to generate random number
+ * @returns random normalized vec3 within a unit sphere
+ */
 vec3 randUnitVector(vec2 p)
 {
 	return normalize(randUnitSphere(p));
 }
 
+/**
+ * @param x vec2 to generate random number
+ * @returns random vec3 within a disk (z component = 0.0)
+ */
 vec3 randUnitDisk(vec2 p)
 {
 	return vec3(randUnitSphere(p).xy, 0);
 }
 
+/**
+ * @param normal normal of the surface
+ * @returns random vec3 within a unit hemisphere
+ */
 vec3 randHemisphere(const vec3 normal)
 {
 	vec3 onSphere = randUnitVector(normal.xy);
@@ -106,6 +140,11 @@ struct Ray
 	vec3 direction;
 };
 
+/**
+ * @param r Ray object
+ * @param t distance from the ray origin
+ * @returns value of the ray hit point at distance `t`
+ */
 vec3 RayAt(const Ray r, float t)
 {
 	return r.origin + t * r.direction;
@@ -147,7 +186,7 @@ struct HitRecord
 	Primitive obj;
 };
 
-// ---------- hit functions fro primitives ----------------
+// ---------- hit functions for primitives ----------------
 /**
  * @returns -1 if there is no hit, else returns the value of `t`
  * which is the hit distance from the ray's origin
@@ -190,6 +229,10 @@ float HitPlane(const Plane plane, const Ray r)
 	return numerator / denominator;
 }
 
+
+/**
+ * @returns color of the closest object hit
+ */
 vec4 RayColor(const Ray r)
 {
 	Primitive objs[4] = Primitive[](
@@ -257,6 +300,7 @@ vec4 RayColor(const Ray r)
 	// prolly won't reach here, but just in case
 	return vec4(1.0, 0.0, 1.0, 1.0); // magenta
 }
+
 
 void main()
 {
