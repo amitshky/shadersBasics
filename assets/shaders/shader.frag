@@ -70,7 +70,7 @@ vec3 hash32(vec2 x)
 }
 
 /**
- * gernerates a random values within the range [min, max)
+ * generates a random values within the range [min, max)
  * @param minVal min value of the range
  * @param maxVal max value of the range
  * @returns random vec3
@@ -243,7 +243,7 @@ vec4 RayColor(const Ray r)
 	);
 
 	HitRecord rec;
-	// WARNING: may not work in every device of version of glsl
+	// WARNING: may not work in every device or version of glsl
 	// TODO: find a better way of doing this
 	rec.closestT = MAX_FLOAT; // max float
 
