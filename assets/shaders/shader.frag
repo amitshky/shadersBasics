@@ -190,12 +190,6 @@ float HitPlane(const Plane plane, const Ray r)
 
 vec4 RayColor(const Ray r)
 {
-	// Sphere spheres[3] = Sphere[](
-	// 	Sphere(vec3( 0.0, 0.0, -1.0), 0.5),
-	// 	Sphere(vec3( 1.2, 0.0, -1.0), 0.5),
-	// 	Sphere(vec3(-1.2, 0.0, -1.0), 0.5)
-	// );
-
 	Primitive objs[4] = Primitive[](
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
@@ -219,7 +213,7 @@ vec4 RayColor(const Ray r)
 			if (t < rec.closestT)
 			{
 				rec.closestT = t;
-				rec.obj.type = SPHERE;
+				rec.obj.type = objs[i].type;
 				rec.obj.sphere = objs[i].sphere;
 			}
 		}
@@ -232,7 +226,7 @@ vec4 RayColor(const Ray r)
 			if (t < rec.closestT)
 			{
 				rec.closestT = t;
-				rec.obj.type = PLANE;
+				rec.obj.type = objs[i].type;
 				rec.obj.plane = objs[i].plane;
 			}
 		}
@@ -258,8 +252,8 @@ vec4 RayColor(const Ray r)
 		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
 	}
 
-	// prolly won't reach here
-	return vec4(0.0);
+	// prolly won't reach here, but just in case
+	return vec4(1.0, 0.0, 1.0, 1.0); // magenta
 }
 
 void main()
