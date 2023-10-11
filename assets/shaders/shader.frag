@@ -109,12 +109,47 @@ vec3 RayAt(const Ray r, float t)
 	return r.origin + t * r.direction;
 }
 
+// --------- primitive objects ------------------
+
+// types of primitives
+const uint SPHERE = 0;
+const uint PLANE = 1;
+
 struct Sphere
 {
 	vec3 center;
 	float radius;
 };
 
+struct Plane
+{
+	vec3 normal;
+	float yIntercept;
+};
+
+// like a base class for prmitives
+// only one primitive will be initialized
+// you can check that using the type
+struct Primitive
+{
+	uint type;
+	Sphere sphere;
+	Plane plane;
+};
+
+// to record the closest object hit
+struct HitRecord
+{
+	float closestT;
+	vec3 normal;
+	Primitive obj;
+};
+
+// ---------- hit functions fro primitives ----------------
+/**
+ * @returns -1 if there is no hit, else returns the value of `t`
+ * which is the hit distance from the ray's origin
+ */
 float HitSphere(const Sphere sphere, const Ray r)
 {
 	// in the quadriatic equation
@@ -138,12 +173,10 @@ float HitSphere(const Sphere sphere, const Ray r)
 	return (-h - sqrt(discriminant)) / a;
 }
 
-struct Plane
-{
-	vec3 normal;
-	float yIntercept;
-};
-
+/**
+ * @returns -1 if there is no hit, else returns the value of `t`
+ * which is the hit distance from the ray's origin
+ */
 float HitPlane(const Plane plane, const Ray r)
 {
 	float numerator = plane.yIntercept - dot(r.origin, plane.normal);
@@ -155,49 +188,78 @@ float HitPlane(const Plane plane, const Ray r)
 	return numerator / denominator;
 }
 
-struct HitRecord
-{
-	float closestT;
-	vec3 normal;
-	Sphere sphere;
-};
-
 vec4 RayColor(const Ray r)
 {
-	Sphere spheres[3] = Sphere[]( //
-		Sphere(vec3(0.0, 0.0, -1.0), 0.5), //
-		Sphere(vec3(1.2, 0.0, -1.0), 0.5), //
-		Sphere(vec3(-1.2, 0.0, -1.0), 0.5), //
+	// Sphere spheres[3] = Sphere[](
+	// 	Sphere(vec3( 0.0, 0.0, -1.0), 0.5),
+	// 	Sphere(vec3( 1.2, 0.0, -1.0), 0.5),
+	// 	Sphere(vec3(-1.2, 0.0, -1.0), 0.5)
+	// );
+
+	Primitive objs[4] = Primitive[](
+		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
+		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
+		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
+		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
 	);
 
-	vec4 color = vec4(1.0);
 	HitRecord rec;
 	// WARNING: may not work in every device of version of glsl
 	// TODO: find a better way of doing this
 	rec.closestT = 1.0 / 0.0; // max float
 
-	for (int i = 0; i < 3; ++i)
+	for (int i = 0; i < 4; ++i)
 	{
-		float t = HitSphere(spheres[i], r);
-		if (t <= 0.0)
-			continue;
-
-		if (t < rec.closestT)
+		if (objs[i].type == SPHERE)
 		{
-			rec.closestT = t;
-			rec.sphere = spheres[i];
+			float t = HitSphere(objs[i].sphere, r);
+			if (t <= 0.0)
+				continue;
+
+			if (t < rec.closestT)
+			{
+				rec.closestT = t;
+				rec.obj.type = SPHERE;
+				rec.obj.sphere = objs[i].sphere;
+			}
+		}
+		else if (objs[i].type == PLANE)
+		{
+			float t = HitPlane(objs[i].plane, r);
+			if (t <= 0.0)
+				continue;
+
+			if (t < rec.closestT)
+			{
+				rec.closestT = t;
+				rec.obj.type = PLANE;
+				rec.obj.plane = objs[i].plane;
+			}
 		}
 	}
 
 	if (rec.closestT == 1.0 / 0.0)
 	{
+		// sky
 		vec3 dir = normalize(r.direction);
 		float a = 0.5 * (dir.y + 1.0);
 		return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
 	}
 
-	vec3 normal = normalize(RayAt(r, rec.closestT) - rec.sphere.center);
-	return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+	if (rec.obj.type == SPHERE)
+	{
+		vec3 normal = normalize(RayAt(r, rec.closestT) - rec.obj.sphere.center);
+		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+	}
+
+	if (rec.obj.type == PLANE)
+	{
+		vec3 normal = rec.obj.plane.normal;
+		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+	}
+
+	// prolly won't reach here
+	return vec4(0.0);
 }
 
 void main()
