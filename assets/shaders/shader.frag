@@ -20,6 +20,8 @@ layout(location = 0) out vec4 outColor;
 
 const int MAX_SAMPLES = 32;
 const float PI = 3.14159265359;
+const float MAX_FLOAT = 1.0 / 0.0;
+const float MIN_FLOAT = -1.0 / 0.0;
 
 
 // ---------------------------------------
@@ -128,7 +130,7 @@ struct Plane
 };
 
 // like a base class for prmitives
-// only one primitive will be initialized
+// only one primitive will be used
 // you can check that using the type
 struct Primitive
 {
@@ -200,7 +202,7 @@ vec4 RayColor(const Ray r)
 	HitRecord rec;
 	// WARNING: may not work in every device of version of glsl
 	// TODO: find a better way of doing this
-	rec.closestT = 1.0 / 0.0; // max float
+	rec.closestT = MAX_FLOAT; // max float
 
 	for (int i = 0; i < 4; ++i)
 	{
@@ -232,7 +234,7 @@ vec4 RayColor(const Ray r)
 		}
 	}
 
-	if (rec.closestT == 1.0 / 0.0)
+	if (rec.closestT == MAX_FLOAT)
 	{
 		// sky
 		vec3 dir = normalize(r.direction);
