@@ -182,7 +182,6 @@ struct Primitive
 struct HitRecord
 {
 	float closestT;
-	vec3 normal;
 	Primitive obj;
 };
 
