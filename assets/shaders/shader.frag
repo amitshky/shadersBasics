@@ -155,31 +155,49 @@ float HitPlane(const Plane plane, const Ray r)
 	return numerator / denominator;
 }
 
+struct HitRecord
+{
+	float closestT;
+	vec3 normal;
+	Sphere sphere;
+};
+
 vec4 RayColor(const Ray r)
 {
-	Sphere sphere = Sphere(vec3(0.0, 0.0, -1.0), 0.5);
-	Plane plane = Plane(vec3(0.0, 1.0, 0.0), -sphere.radius - 0.001);
+	Sphere spheres[3] = Sphere[]( //
+		Sphere(vec3(0.0, 0.0, -1.0), 0.5), //
+		Sphere(vec3(1.2, 0.0, -1.0), 0.5), //
+		Sphere(vec3(-1.2, 0.0, -1.0), 0.5), //
+	);
 
-	float t = HitSphere(sphere, r);
-	if (t > 0.0)
+	vec4 color = vec4(1.0);
+	HitRecord rec;
+	// WARNING: may not work in every device of version of glsl
+	// TODO: find a better way of doing this
+	rec.closestT = 1.0 / 0.0; // max float
+
+	for (int i = 0; i < 3; ++i)
 	{
-		// calc normal
-		vec3 normal = normalize(RayAt(r, t) - sphere.center);
-		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+		float t = HitSphere(spheres[i], r);
+		if (t <= 0.0)
+			continue;
+
+		if (t < rec.closestT)
+		{
+			rec.closestT = t;
+			rec.sphere = spheres[i];
+		}
 	}
 
-	t = HitPlane(plane, r);
-	if (t > 0.0)
+	if (rec.closestT == 1.0 / 0.0)
 	{
-		// calc normal
-		// vec3 normal = normalize(RayAt(r, t) - sphere.center);
-		vec3 normal = plane.normal;
-		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+		vec3 dir = normalize(r.direction);
+		float a = 0.5 * (dir.y + 1.0);
+		return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
 	}
 
-	vec3 dir = normalize(r.direction);
-	float a = 0.5 * (dir.y + 1.0);
-	return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
+	vec3 normal = normalize(RayAt(r, rec.closestT) - rec.sphere.center);
+	return vec4(0.5 * (normal + vec3(1.0)), 1.0);
 }
 
 void main()
