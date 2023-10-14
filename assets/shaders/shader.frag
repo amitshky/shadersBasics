@@ -18,7 +18,7 @@ layout(location = 1) in vec3 inRayDir;
 
 layout(location = 0) out vec4 outColor;
 
-const int MAX_SAMPLES = 32;
+const int MAX_SAMPLES = 8;
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_FLOAT = -1.0 / 0.0;
@@ -199,8 +199,10 @@ float HitSphere(const Sphere sphere, const Ray r)
 	// replace b = 2h in quadriatic equation
 	// (-h +- sqrt(h^2 - ac)) / a
 	// NOTE: the dot product of itself can be replaced with length squared
+
 	vec3 originToCenter = r.origin - sphere.center;
-	float a = dot(r.direction, r.direction);
+	// float a = dot(r.direction, r.direction); // NOTE: if the ray direction is not normalized uncomment this
+	float a = 1.0f; // ray direction is normalized so dot product is 1.0
 	float h = dot(r.direction, originToCenter);
 	float c = dot(originToCenter, originToCenter) - sphere.radius * sphere.radius;
 
@@ -286,8 +288,11 @@ vec4 RayColor(const Ray r)
 
 	if (rec.obj.type == SPHERE)
 	{
+		vec3 lightDir = vec3(0.5, 2.0, 1.0);
 		vec3 normal = normalize(RayAt(r, rec.closestT) - rec.obj.sphere.center);
-		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
+		float intensity = dot(lightDir, normal);
+
+		return intensity * vec4(1.0, 0.0, 1.0, 1.0);
 	}
 
 	if (rec.obj.type == PLANE)
