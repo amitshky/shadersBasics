@@ -18,10 +18,11 @@ layout(location = 1) in vec3 inRayDir;
 
 layout(location = 0) out vec4 outColor;
 
-const int MAX_SAMPLES = 8;
+const int MAX_SAMPLES = 1;
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_FLOAT = -1.0 / 0.0;
+const uint NUM_OBJS = 4;
 
 
 // ---------------------------------------
@@ -234,21 +235,14 @@ float HitPlane(const Plane plane, const Ray r)
 /**
  * @returns color of the closest object hit
  */
-vec4 RayColor(const Ray r)
+vec4 RayColor(const Ray r, inout Primitive objs[NUM_OBJS])
 {
-	Primitive objs[4] = Primitive[](
-		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
-	);
-
 	HitRecord rec;
 	// WARNING: may not work in every device or version of glsl
 	// TODO: find a better way of doing this
 	rec.closestT = MAX_FLOAT; // max float
 
-	for (int i = 0; i < 4; ++i)
+	for (int i = 0; i < NUM_OBJS; ++i)
 	{
 		if (objs[i].type == SPHERE)
 		{
@@ -281,7 +275,7 @@ vec4 RayColor(const Ray r)
 	if (rec.closestT == MAX_FLOAT)
 	{
 		// sky
-		vec3 dir = normalize(r.direction);
+		vec3 dir = r.direction;
 		float a = 0.5 * (dir.y + 1.0);
 		return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
 	}
@@ -308,17 +302,33 @@ vec4 RayColor(const Ray r)
 
 void main()
 {
+	Primitive objs[NUM_OBJS] = Primitive[NUM_OBJS](
+		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
+		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
+		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
+		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
+	);
+
+
 	vec4 color = vec4(0.0);
 
-	for (int i = 0; i < MAX_SAMPLES; ++i)
-	{
-		vec2 p = inPosition.xy * ubo.time;
-		vec3 rayDir = normalize(inRayDir + hash32(p));
-		vec3 origin = ubo.cameraPos;
+	// for (int i = 0; i < MAX_SAMPLES; ++i)
+	// {
+	// 	vec2 p = inPosition.xy * ubo.time;
+	// 	vec3 rayDir = normalize(inRayDir + hash32(p));
+	// 	vec3 origin = ubo.cameraPos;
 
-		Ray ray = Ray(origin, rayDir);
-		color += RayColor(ray);
-	}
+	// 	Ray ray = Ray(origin, rayDir);
+	// 	color += RayColor(ray);
+	// }
+
+
+	vec2 p = inPosition.xy * ubo.time;
+	vec3 rayDir = normalize(inRayDir + hash32(p));
+	vec3 origin = ubo.cameraPos;
+
+	Ray ray = Ray(origin, rayDir);
+	color += RayColor(ray, objs);
 
 	outColor = color / float(MAX_SAMPLES);
 }
