@@ -130,6 +130,7 @@ vec3 randHemisphere(const vec3 normal)
 	if (dot(onSphere, normal) > 0.0)
 		return onSphere;
 
+	// flip the points if not aligned with the normal
 	return -onSphere;
 }
 
@@ -166,7 +167,7 @@ struct Sphere
 struct Plane
 {
 	vec3 normal;
-	float yIntercept;
+	float intercept;
 };
 
 // like a base class for prmitives
@@ -183,7 +184,9 @@ struct Primitive
 struct HitRecord
 {
 	float closestT;
-	Primitive obj;
+	vec3 normal;
+	vec3 point; // point of hit
+	Primitive obj; // object at point of hit
 };
 
 // ---------- hit functions for primitives ----------------
@@ -222,7 +225,7 @@ float HitSphere(const Sphere sphere, const Ray r)
  */
 float HitPlane(const Plane plane, const Ray r)
 {
-	float numerator = plane.yIntercept - dot(r.origin, plane.normal);
+	float numerator = plane.intercept - dot(r.origin, plane.normal);
 	float denominator = dot(r.direction, plane.normal);
 
 	if (denominator == 0.0)
@@ -235,68 +238,85 @@ float HitPlane(const Plane plane, const Ray r)
 /**
  * @returns color of the closest object hit
  */
-vec4 RayColor(const Ray r, inout Primitive objs[NUM_OBJS])
+vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 {
 	HitRecord rec;
 	// WARNING: may not work in every device or version of glsl
 	// TODO: find a better way of doing this
 	rec.closestT = MAX_FLOAT; // max float
 
-	for (int i = 0; i < NUM_OBJS; ++i)
-	{
-		if (objs[i].type == SPHERE)
-		{
-			float t = HitSphere(objs[i].sphere, r);
-			if (t <= 0.0)
-				continue;
+	vec4 color = vec4(1.0);
 
-			if (t < rec.closestT)
+	for (int bounces = 0; bounces < 2; ++bounces)
+	{
+		for (int i = 0; i < NUM_OBJS; ++i)
+		{
+			if (objs[i].type == SPHERE)
 			{
-				rec.closestT = t;
-				rec.obj.type = objs[i].type;
-				rec.obj.sphere = objs[i].sphere;
+				float t = HitSphere(objs[i].sphere, r);
+				if (t <= 0.0)
+					continue;
+
+				if (t < rec.closestT)
+				{
+					rec.closestT = t;
+					rec.point = RayAt(r, t);
+					rec.obj.type = objs[i].type;
+					rec.obj.sphere = objs[i].sphere;
+				}
+			}
+			else if (objs[i].type == PLANE)
+			{
+				float t = HitPlane(objs[i].plane, r);
+				if (t <= 0.0)
+					continue;
+
+				if (t < rec.closestT)
+				{
+					rec.closestT = t;
+					rec.point = RayAt(r, t);
+					rec.obj.type = objs[i].type;
+					rec.obj.plane = objs[i].plane;
+				}
 			}
 		}
-		else if (objs[i].type == PLANE)
+
+		if (rec.closestT == MAX_FLOAT)
 		{
-			float t = HitPlane(objs[i].plane, r);
-			if (t <= 0.0)
-				continue;
-
-			if (t < rec.closestT)
-			{
-				rec.closestT = t;
-				rec.obj.type = objs[i].type;
-				rec.obj.plane = objs[i].plane;
-			}
+			// sky
+			vec3 dir = r.direction;
+			float a = 0.5 * (dir.y + 1.0);
+			return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
 		}
+
+		if (rec.obj.type == SPHERE)
+		{
+			rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius; // normalizing; radius is the magnitude of a vector from the center to the surface of the sphere
+
+			// rec.normal = normalize(rec.point - rec.obj.sphere.center);
+			vec3 lightDir = vec3(0.5, 2.0, 1.0);
+			float intensity = max(dot(lightDir, rec.normal), 0.0) * 0.6;
+			return intensity * vec4(0.4, 0.6, 0.5, 1.0);
+
+			// color = vec4(0.5 * color.xyz, 1.0);
+		}
+
+		if (rec.obj.type == PLANE)
+		{
+			rec.normal = rec.obj.plane.normal;
+			// color = vec4(0.5 * color.xyz, 1.0);
+			return vec4(0.698, 0.698, 0.698, 1.0);
+			// return vec4(0.5 * (rec.normal + vec3(1.0)), 1.0);
+		}
+
+		vec3 direction = randHemisphere(rec.normal);
+		r = Ray(rec.point, direction);
 	}
 
-	if (rec.closestT == MAX_FLOAT)
-	{
-		// sky
-		vec3 dir = r.direction;
-		float a = 0.5 * (dir.y + 1.0);
-		return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
-	}
-
-	if (rec.obj.type == SPHERE)
-	{
-		vec3 lightDir = vec3(0.5, 2.0, 1.0);
-		vec3 normal = normalize(RayAt(r, rec.closestT) - rec.obj.sphere.center);
-		float intensity = dot(lightDir, normal);
-
-		return intensity * vec4(1.0, 0.0, 1.0, 1.0);
-	}
-
-	if (rec.obj.type == PLANE)
-	{
-		vec3 normal = rec.obj.plane.normal;
-		return vec4(0.5 * (normal + vec3(1.0)), 1.0);
-	}
+	return color;
 
 	// prolly won't reach here, but just in case
-	return vec4(1.0, 0.0, 1.0, 1.0); // magenta
+	// return vec4(1.0, 0.0, 1.0, 1.0); // magenta
 }
 
 
@@ -324,7 +344,7 @@ void main()
 
 
 	vec2 p = inPosition.xy * ubo.time;
-	vec3 rayDir = normalize(inRayDir + hash32(p));
+	vec3 rayDir = normalize(inRayDir);
 	vec3 origin = ubo.cameraPos;
 
 	Ray ray = Ray(origin, rayDir);
