@@ -18,7 +18,7 @@ layout(location = 1) in vec3 inRayDir;
 
 layout(location = 0) out vec4 outColor;
 
-const int MAX_SAMPLES = 1;
+const int MAX_SAMPLES = 8;
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_FLOAT = -1.0 / 0.0;
@@ -247,7 +247,7 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 
 	vec4 color = vec4(1.0);
 
-	for (int bounces = 0; bounces < 2; ++bounces)
+	for (int bounces = 0; bounces < 8; ++bounces)
 	{
 		for (int i = 0; i < NUM_OBJS; ++i)
 		{
@@ -292,25 +292,27 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 		if (rec.obj.type == SPHERE)
 		{
 			rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius; // normalizing; radius is the magnitude of a vector from the center to the surface of the sphere
-
 			// rec.normal = normalize(rec.point - rec.obj.sphere.center);
-			vec3 lightDir = vec3(0.5, 2.0, 1.0);
-			float intensity = max(dot(lightDir, rec.normal), 0.0) * 0.6;
-			return intensity * vec4(0.4, 0.6, 0.5, 1.0);
 
-			// color = vec4(0.5 * color.xyz, 1.0);
+			// vec3 lightDir = vec3(0.5, 2.0, 1.0);
+			// float intensity = max(dot(lightDir, rec.normal), 0.0) * 0.6;
+			// return intensity * vec4(0.4, 0.6, 0.5, 1.0);
+
+			color = vec4(0.5 * color.xyz, 1.0);
 		}
 
 		if (rec.obj.type == PLANE)
 		{
 			rec.normal = rec.obj.plane.normal;
-			// color = vec4(0.5 * color.xyz, 1.0);
-			return vec4(0.698, 0.698, 0.698, 1.0);
+			color = vec4(0.5 * color.xyz, 1.0);
+			// return vec4(0.698, 0.698, 0.698, 1.0);
 			// return vec4(0.5 * (rec.normal + vec3(1.0)), 1.0);
 		}
 
-		vec3 direction = randHemisphere(rec.normal);
+		vec3 direction = normalize(randHemisphere(rec.normal));
 		r = Ray(rec.point, direction);
+
+		color = vec4(direction.xyz, 1.0);
 	}
 
 	return color;
@@ -330,8 +332,7 @@ void main()
 	);
 
 
-	vec4 color = vec4(0.0);
-
+	// vec4 color = vec4(0.0);
 	// for (int i = 0; i < MAX_SAMPLES; ++i)
 	// {
 	// 	vec2 p = inPosition.xy * ubo.time;
@@ -339,8 +340,9 @@ void main()
 	// 	vec3 origin = ubo.cameraPos;
 
 	// 	Ray ray = Ray(origin, rayDir);
-	// 	color += RayColor(ray);
+	// 	color += RayColor(ray, objs);
 	// }
+	// outColor = color / float(MAX_SAMPLES);
 
 
 	vec2 p = inPosition.xy * ubo.time;
@@ -348,7 +350,5 @@ void main()
 	vec3 origin = ubo.cameraPos;
 
 	Ray ray = Ray(origin, rayDir);
-	color += RayColor(ray, objs);
-
-	outColor = color / float(MAX_SAMPLES);
+	outColor = RayColor(ray, objs);
 }
