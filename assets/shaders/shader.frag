@@ -18,7 +18,8 @@ layout(location = 1) in vec3 inRayDir;
 
 layout(location = 0) out vec4 outColor;
 
-const int MAX_SAMPLES = 50;
+const int MAX_SAMPLES = 8;
+const int MAX_BOUNCES = 8;
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_FLOAT = -1.0 / 0.0;
@@ -126,7 +127,7 @@ vec3 randUnitDisk(vec2 p)
  */
 vec3 randHemisphere(const vec3 normal)
 {
-	vec3 onSphere = randUnitVector(normal.xy);
+	vec3 onSphere = randUnitVector(inPosition.xy * ubo.time);
 	if (dot(onSphere, normal) > 0.0)
 		return onSphere;
 
@@ -245,10 +246,9 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 	// TODO: find a better way of doing this
 	// rec.closestT = MAX_FLOAT; // max float
 
-	// vec4 color = vec4(1.0);
 	float attenuation = 1.0;
 
-	for (int bounces = 0; bounces < 100; ++bounces)
+	for (int bounces = 0; bounces < MAX_BOUNCES; ++bounces)
 	{
 		rec.closestT = MAX_FLOAT; // max float
 		for (int i = 0; i < NUM_OBJS; ++i)
@@ -288,7 +288,8 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 			// sky
 			vec3 dir = r.direction;
 			float a = 0.5 * (dir.y + 1.0);
-			return vec4(attenuation * ((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0)), 1.0);
+			vec3 skyGradient = (1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0);
+			return vec4(attenuation * skyGradient, 1.0);
 		}
 
 		if (rec.obj.type == SPHERE)
@@ -331,28 +332,28 @@ void main()
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3( 0.0, -200.5, -1.0), 200.0), Plane(vec3(0.0), 0.0))
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.5, -1.0), 500.0), Plane(vec3(0.0), 0.0))
 		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
 	);
 
 
-	// vec4 color = vec4(0.0);
-	// for (int i = 0; i < MAX_SAMPLES; ++i)
-	// {
-	// 	vec2 p = inPosition.xy * ubo.time;
-	// 	vec3 rayDir = normalize(inRayDir + hash32(p));
-	// 	vec3 origin = ubo.cameraPos;
+	vec4 color = vec4(0.0);
+	for (int i = 0; i < MAX_SAMPLES; ++i)
+	{
+		vec2 p = inPosition.xy * ubo.time;
+		vec3 rayDir = normalize(inRayDir + hash32(p));
+		vec3 origin = ubo.cameraPos;
 
-	// 	Ray ray = Ray(origin, rayDir);
-	// 	color += RayColor(ray, objs);
-	// }
-	// outColor = color / float(MAX_SAMPLES);
+		Ray ray = Ray(origin, rayDir);
+		color += RayColor(ray, objs);
+	}
+	outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
 
 
-	vec2 p = inPosition.xy * ubo.time;
-	vec3 rayDir = normalize(inRayDir);
-	vec3 origin = ubo.cameraPos;
+	// vec2 p = inPosition.xy * ubo.time;
+	// vec3 rayDir = normalize(inRayDir);
+	// vec3 origin = ubo.cameraPos;
 
-	Ray ray = Ray(origin, rayDir);
-	outColor = RayColor(ray, objs);
+	// Ray ray = Ray(origin, rayDir);
+	// outColor = RayColor(ray, objs);
 }
