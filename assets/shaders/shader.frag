@@ -18,7 +18,7 @@ layout(location = 1) in vec3 inRayDir;
 
 layout(location = 0) out vec4 outColor;
 
-const int MAX_SAMPLES = 8;
+const int MAX_SAMPLES = 50;
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_FLOAT = -1.0 / 0.0;
@@ -243,12 +243,14 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 	HitRecord rec;
 	// WARNING: may not work in every device or version of glsl
 	// TODO: find a better way of doing this
-	rec.closestT = MAX_FLOAT; // max float
+	// rec.closestT = MAX_FLOAT; // max float
 
-	vec4 color = vec4(1.0);
+	// vec4 color = vec4(1.0);
+	float attenuation = 1.0;
 
-	for (int bounces = 0; bounces < 8; ++bounces)
+	for (int bounces = 0; bounces < 100; ++bounces)
 	{
+		rec.closestT = MAX_FLOAT; // max float
 		for (int i = 0; i < NUM_OBJS; ++i)
 		{
 			if (objs[i].type == SPHERE)
@@ -286,7 +288,7 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 			// sky
 			vec3 dir = r.direction;
 			float a = 0.5 * (dir.y + 1.0);
-			return vec4((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0), 1.0);
+			return vec4(attenuation * ((1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0)), 1.0);
 		}
 
 		if (rec.obj.type == SPHERE)
@@ -298,24 +300,25 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 			// float intensity = max(dot(lightDir, rec.normal), 0.0) * 0.6;
 			// return intensity * vec4(0.4, 0.6, 0.5, 1.0);
 
-			color = vec4(0.5 * color.xyz, 1.0);
+			// color = vec4(0.005 * color.xyz, 1.0);
+			attenuation *= 0.5;
 		}
 
 		if (rec.obj.type == PLANE)
 		{
 			rec.normal = rec.obj.plane.normal;
-			color = vec4(0.5 * color.xyz, 1.0);
+			// color = vec4(0.005 * color.xyz, 1.0);
 			// return vec4(0.698, 0.698, 0.698, 1.0);
 			// return vec4(0.5 * (rec.normal + vec3(1.0)), 1.0);
+
+			attenuation *= 0.5;
 		}
 
 		vec3 direction = normalize(randHemisphere(rec.normal));
 		r = Ray(rec.point, direction);
-
-		color = vec4(direction.xyz, 1.0);
 	}
 
-	return color;
+	return vec4(vec3(0.0), 1.0);
 
 	// prolly won't reach here, but just in case
 	// return vec4(1.0, 0.0, 1.0, 1.0); // magenta
@@ -328,7 +331,8 @@ void main()
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
+		Primitive(SPHERE, Sphere(vec3( 0.0, -200.5, -1.0), 200.0), Plane(vec3(0.0), 0.0))
+		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
 	);
 
 
