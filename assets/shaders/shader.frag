@@ -18,11 +18,13 @@ layout(location = 1) in vec3 inRayDir;
 
 layout(location = 0) out vec4 outColor;
 
-const int MAX_SAMPLES = 8;
-const int MAX_BOUNCES = 8;
+
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_FLOAT = -1.0 / 0.0;
+
+const int MAX_SAMPLES = 8;
+const int MAX_BOUNCES = 8;
 const uint NUM_OBJS = 4;
 
 
@@ -107,7 +109,7 @@ vec3 randUnitSphere(vec2 p)
  * @param x vec2 to generate random number
  * @returns random normalized vec3 within a unit sphere
  */
-vec3 randUnitVector(vec2 p)
+vec3 randNormSphereVec(vec2 p)
 {
 	return normalize(randUnitSphere(p));
 }
@@ -125,9 +127,9 @@ vec3 randUnitDisk(vec2 p)
  * @param normal normal of the surface
  * @returns random vec3 within a unit hemisphere
  */
-vec3 randHemisphere(const vec3 normal)
+vec3 randNormHemisphere(const vec3 normal)
 {
-	vec3 onSphere = randUnitVector(inPosition.xy * ubo.time);
+	vec3 onSphere = randNormSphereVec(normal.xy * ubo.time);
 	if (dot(onSphere, normal) > 0.0)
 		return onSphere;
 
@@ -315,14 +317,11 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 			attenuation *= 0.5;
 		}
 
-		vec3 direction = normalize(randHemisphere(rec.normal));
+		vec3 direction = randNormHemisphere(rec.normal); // this is already normalized
 		r = Ray(rec.point, direction);
 	}
 
 	return vec4(vec3(0.0), 1.0);
-
-	// prolly won't reach here, but just in case
-	// return vec4(1.0, 0.0, 1.0, 1.0); // magenta
 }
 
 
@@ -332,28 +331,31 @@ void main()
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3( 0.0, -500.5, -1.0), 500.0), Plane(vec3(0.0), 0.0))
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.5001, -1.0), 500.0), Plane(vec3(0.0), 0.0))
 		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
 	);
 
 
-	vec4 color = vec4(0.0);
-	for (int i = 0; i < MAX_SAMPLES; ++i)
-	{
-		vec2 p = inPosition.xy * ubo.time;
-		vec3 rayDir = normalize(inRayDir + hash32(p));
-		vec3 origin = ubo.cameraPos;
+	// vec4 color = vec4(0.0);
+	// for (int i = 0; i < MAX_SAMPLES; ++i)
+	// {
+	// 	vec2 p = inPosition.xy * ubo.time;
+	// 	vec3 rayDir = normalize(inRayDir + hash32(p));
+	// 	vec3 origin = ubo.cameraPos;
 
-		Ray ray = Ray(origin, rayDir);
-		color += RayColor(ray, objs);
-	}
-	outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
+	// 	Ray ray = Ray(origin, rayDir);
+	// 	color += RayColor(ray, objs);
+	// }
+	// outColor = color / float(MAX_SAMPLES);
+
+	// outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
 
 
-	// vec2 p = inPosition.xy * ubo.time;
-	// vec3 rayDir = normalize(inRayDir);
-	// vec3 origin = ubo.cameraPos;
+	vec2 p = inPosition.xy * ubo.time;
+	vec3 rayDir = normalize(inRayDir);
+	vec3 origin = ubo.cameraPos;
 
-	// Ray ray = Ray(origin, rayDir);
-	// outColor = RayColor(ray, objs);
+	Ray ray = Ray(origin, rayDir);
+	vec4 color = RayColor(ray, objs);
+	outColor = vec4((color.xyz), 1.0);
 }
