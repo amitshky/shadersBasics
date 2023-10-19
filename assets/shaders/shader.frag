@@ -23,7 +23,7 @@ const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_FLOAT = -1.0 / 0.0;
 
-const int MAX_SAMPLES = 8;
+const int MAX_SAMPLES = 4;
 const int MAX_BOUNCES = 8;
 const uint NUM_OBJS = 4;
 
@@ -336,26 +336,28 @@ void main()
 	);
 
 
-	// vec4 color = vec4(0.0);
-	// for (int i = 0; i < MAX_SAMPLES; ++i)
-	// {
-	// 	vec2 p = inPosition.xy * ubo.time;
-	// 	vec3 rayDir = normalize(inRayDir + hash32(p));
-	// 	vec3 origin = ubo.cameraPos;
+	vec4 color = vec4(0.0);
+	for (int i = 0; i < MAX_SAMPLES; ++i)
+	{
+		vec2 p = inPosition.xy * ubo.time;
+		vec3 rayDir = normalize(inRayDir + hash32(p));
+		vec3 origin = ubo.cameraPos;
 
-	// 	Ray ray = Ray(origin, rayDir);
-	// 	color += RayColor(ray, objs);
-	// }
+		Ray ray = Ray(origin, rayDir);
+		color += RayColor(ray, objs);
+	}
+
 	// outColor = color / float(MAX_SAMPLES);
+	outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
 
-	// outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
 
+	// vec2 p = inPosition.xy * ubo.time;
+	// vec3 rayDir = normalize(inRayDir);
+	// vec3 origin = ubo.cameraPos;
 
-	vec2 p = inPosition.xy * ubo.time;
-	vec3 rayDir = normalize(inRayDir);
-	vec3 origin = ubo.cameraPos;
+	// Ray ray = Ray(origin, rayDir);
+	// vec4 color = RayColor(ray, objs);
 
-	Ray ray = Ray(origin, rayDir);
-	vec4 color = RayColor(ray, objs);
-	outColor = vec4((color.xyz), 1.0);
+	// // outColor = vec4((color.xyz), 1.0);
+	// outColor = vec4(sqrt(color.xyz), 1.0);
 }
