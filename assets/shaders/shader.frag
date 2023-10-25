@@ -129,8 +129,7 @@ vec3 randUnitDisk(vec2 p)
  */
 vec3 randNormHemisphere(const vec3 normal)
 {
-	// TODO: multiply by time and then pass it
-	vec3 onSphere = randNormSphereVec(normal.xy);
+	vec3 onSphere = randNormSphereVec(normal.xy * ubo.time);
 	if (dot(onSphere, normal) > 0.0)
 		return onSphere;
 
@@ -222,21 +221,20 @@ bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 		return false;
 
 	float t = (-h - sqrt(discriminant)) / a;
-
-	if (t <= MIN_HIT_BIAS)
-		return false;
-
-	else if (t > MIN_HIT_BIAS && t < rec.closestT)
+	if (t > MIN_HIT_BIAS && t < rec.closestT)
 	{
 		rec.closestT = t;
 		rec.point = RayAt(r, t);
 		rec.obj.type = SPHERE;
 		rec.obj.sphere = sphere;
 		// radius is the magnitude of a vector from the center to the surface of the sphere
+		// so we are basically normalizing the normal vector of the sphere
 		rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius;
+
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 /**
@@ -316,8 +314,8 @@ void main()
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		// Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), 0.0))
-		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.501))
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), 0.0))
+		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.501))
 	);
 
 
