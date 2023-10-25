@@ -21,7 +21,6 @@ layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
-const float MIN_FLOAT = -1.0 / 0.0;
 
 const int MAX_SAMPLES = 4;
 const int MAX_BOUNCES = 8;
@@ -129,7 +128,7 @@ vec3 randUnitDisk(vec2 p)
  */
 vec3 randNormHemisphere(const vec3 normal)
 {
-	vec3 onSphere = randNormSphereVec(normal.xy * ubo.time);
+	vec3 onSphere = randNormSphereVec(normal.xy);
 	if (dot(onSphere, normal) > 0.0)
 		return onSphere;
 
@@ -244,11 +243,8 @@ float HitPlane(const Plane plane, const Ray r)
 vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 {
 	HitRecord rec;
-	// WARNING: may not work in every device or version of glsl
-	// TODO: find a better way of doing this
-	// rec.closestT = MAX_FLOAT; // max float
-
 	float attenuation = 1.0;
+	float tMin = 0.001;
 
 	for (int bounces = 0; bounces < MAX_BOUNCES; ++bounces)
 	{
@@ -261,7 +257,7 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 				if (t <= 0.0)
 					continue;
 
-				if (t < rec.closestT)
+				if (t > tMin && t < rec.closestT)
 				{
 					rec.closestT = t;
 					rec.point = RayAt(r, t);
@@ -275,7 +271,7 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 				if (t <= 0.0)
 					continue;
 
-				if (t < rec.closestT)
+				if (t > tMin && t < rec.closestT)
 				{
 					rec.closestT = t;
 					rec.point = RayAt(r, t);
@@ -297,23 +293,12 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 		if (rec.obj.type == SPHERE)
 		{
 			rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius; // normalizing; radius is the magnitude of a vector from the center to the surface of the sphere
-			// rec.normal = normalize(rec.point - rec.obj.sphere.center);
-
-			// vec3 lightDir = vec3(0.5, 2.0, 1.0);
-			// float intensity = max(dot(lightDir, rec.normal), 0.0) * 0.6;
-			// return intensity * vec4(0.4, 0.6, 0.5, 1.0);
-
-			// color = vec4(0.005 * color.xyz, 1.0);
 			attenuation *= 0.5;
 		}
 
 		if (rec.obj.type == PLANE)
 		{
 			rec.normal = rec.obj.plane.normal;
-			// color = vec4(0.005 * color.xyz, 1.0);
-			// return vec4(0.698, 0.698, 0.698, 1.0);
-			// return vec4(0.5 * (rec.normal + vec3(1.0)), 1.0);
-
 			attenuation *= 0.5;
 		}
 
@@ -331,8 +316,8 @@ void main()
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3( 0.0, -500.5001, -1.0), 500.0), Plane(vec3(0.0), 0.0))
-		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
+		// Primitive(SPHERE, Sphere(vec3( 0.0, -500.5001, -1.0), 500.0), Plane(vec3(0.0), 0.0))
+		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
 	);
 
 
