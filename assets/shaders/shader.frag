@@ -24,7 +24,7 @@ const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_HIT_BIAS = 0.001; // floating point bias for ray intersections
 
 const int MAX_SAMPLES = 4;
-const int MAX_BOUNCES = 8;
+const int MAX_BOUNCES = 16;
 const uint NUM_OBJS = 4;
 
 
@@ -271,7 +271,7 @@ bool Hit(inout Primitive obj, const Ray r, inout HitRecord rec)
 	if (obj.type == SPHERE)
 		return HitSphere(obj.sphere, r, rec);
 
-	else if (obj.type == PLANE)
+	if (obj.type == PLANE)
 		return HitPlane(obj.plane, r, rec);
 }
 
@@ -279,14 +279,14 @@ bool Hit(inout Primitive obj, const Ray r, inout HitRecord rec)
 /**
  * @returns color of the closest object hit
  */
-vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
+vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 {
 	HitRecord rec;
 	float attenuation = 1.0;
 
 	for (int bounces = 0; bounces < MAX_BOUNCES; ++bounces)
 	{
-		rec.closestT = MAX_FLOAT; // max float
+		rec.closestT = MAX_FLOAT;
 		for (int i = 0; i < NUM_OBJS; ++i)
 		{
 			if (Hit(objs[i], r, rec))
@@ -306,7 +306,7 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 		r = Ray(rec.point, direction);
 	}
 
-	return vec4(vec3(0.0), 1.0);
+	return vec4(0.0, 0.0, 0.0, 1.0);
 }
 
 
@@ -329,7 +329,7 @@ void main()
 	// 	vec3 origin = ubo.cameraPos;
 
 	// 	Ray ray = Ray(origin, rayDir);
-	// 	color += RayColor(ray, objs);
+	// 	color += TraceRay(ray, objs);
 	// }
 
 	// // outColor = color / float(MAX_SAMPLES);
@@ -341,7 +341,7 @@ void main()
 	vec3 origin = ubo.cameraPos;
 
 	Ray ray = Ray(origin, rayDir);
-	vec4 color = RayColor(ray, objs);
+	vec4 color = TraceRay(ray, objs);
 
 	// outColor = vec4((color.xyz), 1.0);
 	outColor = vec4(sqrt(color.xyz), 1.0);
