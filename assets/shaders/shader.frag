@@ -21,6 +21,7 @@ layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
+const float MIN_HIT_BIAS = 0.001; // floating point bias for ray intersections
 
 const int MAX_SAMPLES = 4;
 const int MAX_BOUNCES = 8;
@@ -128,6 +129,7 @@ vec3 randUnitDisk(vec2 p)
  */
 vec3 randNormHemisphere(const vec3 normal)
 {
+	// TODO: multiply by time and then pass it
 	vec3 onSphere = randNormSphereVec(normal.xy);
 	if (dot(onSphere, normal) > 0.0)
 		return onSphere;
@@ -138,6 +140,9 @@ vec3 randNormHemisphere(const vec3 normal)
 
 // ---------------------------------------
 
+/**
+ * // NOTE: Always normalize the direction when initializing
+ */
 struct Ray
 {
 	vec3 origin;
@@ -193,10 +198,9 @@ struct HitRecord
 
 // ---------- hit functions for primitives ----------------
 /**
- * @returns -1 if there is no hit, else returns the value of `t`
- * which is the hit distance from the ray's origin
+ * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
-float HitSphere(const Sphere sphere, const Ray r)
+bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 {
 	// in the quadriatic equation
 	// a = dir . dir
@@ -215,25 +219,60 @@ float HitSphere(const Sphere sphere, const Ray r)
 	float discriminant = h * h - a * c;
 
 	if (discriminant < 0)
-		return -1.0;
+		return false;
 
-	// return the value of `t` to calc point of point of hit
-	return (-h - sqrt(discriminant)) / a;
+	float t = (-h - sqrt(discriminant)) / a;
+
+	if (t <= MIN_HIT_BIAS)
+		return false;
+
+	else if (t > MIN_HIT_BIAS && t < rec.closestT)
+	{
+		rec.closestT = t;
+		rec.point = RayAt(r, t);
+		rec.obj.type = SPHERE;
+		rec.obj.sphere = sphere;
+		// radius is the magnitude of a vector from the center to the surface of the sphere
+		rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius;
+	}
+
+	return true;
 }
 
 /**
- * @returns -1 if there is no hit, else returns the value of `t`
- * which is the hit distance from the ray's origin
+ * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
-float HitPlane(const Plane plane, const Ray r)
+bool HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
 {
 	float numerator = plane.intercept - dot(r.origin, plane.normal);
 	float denominator = dot(r.direction, plane.normal);
 
+	// the ray did not intersect the plane
 	if (denominator == 0.0)
-		return -1.0;
+		return false;
 
-	return numerator / denominator;
+	float t = numerator / denominator;
+	if (t > MIN_HIT_BIAS && t < rec.closestT)
+	{
+		rec.closestT = t;
+		rec.point = RayAt(r, t);
+		rec.obj.type = PLANE;
+		rec.obj.plane = plane;
+		rec.normal = rec.obj.plane.normal;
+
+		return true;
+	}
+
+	return false;
+}
+
+bool Hit(inout Primitive obj, const Ray r, inout HitRecord rec)
+{
+	if (obj.type == SPHERE)
+		return HitSphere(obj.sphere, r, rec);
+
+	else if (obj.type == PLANE)
+		return HitPlane(obj.plane, r, rec);
 }
 
 
@@ -244,41 +283,14 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 {
 	HitRecord rec;
 	float attenuation = 1.0;
-	float tMin = 0.001;
 
 	for (int bounces = 0; bounces < MAX_BOUNCES; ++bounces)
 	{
 		rec.closestT = MAX_FLOAT; // max float
 		for (int i = 0; i < NUM_OBJS; ++i)
 		{
-			if (objs[i].type == SPHERE)
-			{
-				float t = HitSphere(objs[i].sphere, r);
-				if (t <= 0.0)
-					continue;
-
-				if (t > tMin && t < rec.closestT)
-				{
-					rec.closestT = t;
-					rec.point = RayAt(r, t);
-					rec.obj.type = objs[i].type;
-					rec.obj.sphere = objs[i].sphere;
-				}
-			}
-			else if (objs[i].type == PLANE)
-			{
-				float t = HitPlane(objs[i].plane, r);
-				if (t <= 0.0)
-					continue;
-
-				if (t > tMin && t < rec.closestT)
-				{
-					rec.closestT = t;
-					rec.point = RayAt(r, t);
-					rec.obj.type = objs[i].type;
-					rec.obj.plane = objs[i].plane;
-				}
-			}
+			if (Hit(objs[i], r, rec))
+				attenuation *= 0.5;
 		}
 
 		if (rec.closestT == MAX_FLOAT)
@@ -288,18 +300,6 @@ vec4 RayColor(Ray r, inout Primitive objs[NUM_OBJS])
 			float a = 0.5 * (dir.y + 1.0);
 			vec3 skyGradient = (1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0);
 			return vec4(attenuation * skyGradient, 1.0);
-		}
-
-		if (rec.obj.type == SPHERE)
-		{
-			rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius; // normalizing; radius is the magnitude of a vector from the center to the surface of the sphere
-			attenuation *= 0.5;
-		}
-
-		if (rec.obj.type == PLANE)
-		{
-			rec.normal = rec.obj.plane.normal;
-			attenuation *= 0.5;
 		}
 
 		vec3 direction = randNormHemisphere(rec.normal); // this is already normalized
@@ -316,33 +316,33 @@ void main()
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		// Primitive(SPHERE, Sphere(vec3( 0.0, -500.5001, -1.0), 500.0), Plane(vec3(0.0), 0.0))
-		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.5001))
+		// Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), 0.0))
+		Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.501))
 	);
 
 
-	vec4 color = vec4(0.0);
-	for (int i = 0; i < MAX_SAMPLES; ++i)
-	{
-		vec2 p = inPosition.xy * ubo.time;
-		vec3 rayDir = normalize(inRayDir + hash32(p));
-		vec3 origin = ubo.cameraPos;
+	// vec4 color = vec4(0.0);
+	// for (int i = 0; i < MAX_SAMPLES; ++i)
+	// {
+	// 	vec2 p = inPosition.xy * ubo.time;
+	// 	vec3 rayDir = normalize(inRayDir + hash32(p));
+	// 	vec3 origin = ubo.cameraPos;
 
-		Ray ray = Ray(origin, rayDir);
-		color += RayColor(ray, objs);
-	}
+	// 	Ray ray = Ray(origin, rayDir);
+	// 	color += RayColor(ray, objs);
+	// }
 
-	// outColor = color / float(MAX_SAMPLES);
-	outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
+	// // outColor = color / float(MAX_SAMPLES);
+	// outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
 
 
-	// vec2 p = inPosition.xy * ubo.time;
-	// vec3 rayDir = normalize(inRayDir);
-	// vec3 origin = ubo.cameraPos;
+	vec2 p = inPosition.xy * ubo.time;
+	vec3 rayDir = normalize(inRayDir);
+	vec3 origin = ubo.cameraPos;
 
-	// Ray ray = Ray(origin, rayDir);
-	// vec4 color = RayColor(ray, objs);
+	Ray ray = Ray(origin, rayDir);
+	vec4 color = RayColor(ray, objs);
 
-	// // outColor = vec4((color.xyz), 1.0);
-	// outColor = vec4(sqrt(color.xyz), 1.0);
+	// outColor = vec4((color.xyz), 1.0);
+	outColor = vec4(sqrt(color.xyz), 1.0);
 }
