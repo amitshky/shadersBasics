@@ -24,8 +24,8 @@ const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_HIT_BIAS = 0.001; // prevents shadow acne caused by lack of floating point precision
 
 const uint NUM_OBJS = 4;
-const int MAX_SAMPLES = 4;
-const int MAX_BOUNCES = 8;
+const uint MAX_SAMPLES = 4;
+const uint MAX_BOUNCES = 1 << 3; // 2^n
 
 
 // ---------------------------------------
@@ -90,7 +90,7 @@ vec3 randRange3(float minVal, float maxVal)
  */
 vec3 randUnitSphere(vec2 p)
 {
-	vec3 rand = hash32(p * ubo.time);
+	vec3 rand = hash32(p);
 	float phi = 2.0 * PI * rand.x;
 	float cosTheta = 2.0 * rand.y - 1.0;
 	float u = rand.z;
@@ -197,6 +197,9 @@ struct HitRecord
 
 // ---------- hit functions for primitives ----------------
 /**
+ * @params sphere
+ * @params r ray
+ * @params rec used to pass the hit info
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
 void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
@@ -230,10 +233,28 @@ void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 		// radius is the magnitude of a vector from the center to the surface of the sphere
 		// so we are basically normalizing the normal vector of the sphere
 		rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius;
+		return; // no need to calc further if the camera is outside the sphere
+	}
+
+	// useful if the camera is inside the sphere
+	t = (-h + sqrt(discriminant)) / a;
+	if (t > MIN_HIT_BIAS && t < rec.closestT)
+	{
+		rec.closestT = t;
+		rec.point = RayAt(r, t);
+		rec.obj.type = SPHERE;
+		rec.obj.sphere = sphere;
+		// radius is the magnitude of a vector from the center to the surface of the sphere
+		// so we are basically normalizing the normal vector of the sphere
+		rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius;
+		return;
 	}
 }
 
 /**
+ * @params plane
+ * @params r ray
+ * @params rec used to pass the hit info
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
 void HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
@@ -257,19 +278,39 @@ void HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
 }
 
 /**
- * calls the appropriate hit function
+ * calls the appropriate hit function and stores the hit info in `rec`.
+ * the hit info initially has the furthest value of `t` (the
+ * scalar parameter of the parametric equation of a line (ray)),
+ * and if the ray instersects an object `t` is updated.
+ *
+ * @params objs list of objects (primitives)
+ * @params r ray
+ * @params rec used to pass the hit info
+ * @returns true if the ray intersects the objects (i.e., the value of `t` is not the furthest value),
+ * and false if it doesn't.
  */
-void Hit(inout Primitive obj, const Ray r, inout HitRecord rec)
+bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 {
-	if (obj.type == SPHERE)
-		HitSphere(obj.sphere, r, rec);
+	rec.closestT = MAX_FLOAT;
+	for (int i = 0; i < NUM_OBJS; ++i)
+	{
+		if (objs[i].type == SPHERE)
+			HitSphere(objs[i].sphere, r, rec);
 
-	if (obj.type == PLANE)
-		HitPlane(obj.plane, r, rec);
+		else if (objs[i].type == PLANE)
+			HitPlane(objs[i].plane, r, rec);
+	}
+
+	if (rec.closestT == MAX_FLOAT)
+		return false;
+
+	return true;
 }
 
 
 /**
+ * @params r ray
+ * @params objs list of objects (primitives)
  * @returns color of the closest object hit
  */
 vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
@@ -277,29 +318,25 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 	const float diffuseLightIntensity = 0.5;
 	float diffuseLightAttenuation = 1.0;
 
+	HitRecord rec;
 	for (int bounces = 0; bounces < MAX_BOUNCES; ++bounces)
 	{
-		HitRecord rec;
-		rec.closestT = MAX_FLOAT;
-		for (int i = 0; i < NUM_OBJS; ++i)
+		// if hit, then attenuate the color and
+		// cast the ray in a random direction
+		if (Hit(objs, r, rec))
 		{
-			Hit(objs[i], r, rec);
+			diffuseLightAttenuation *= diffuseLightIntensity;
+			vec3 direction = randNormHemisphere(rec.normal);
+			r = Ray(rec.point, direction);
+			continue;
 		}
 
 		// if the ray doesn't intesect anything while bouncing,
 		// return the attenuated ambient color
-		if (rec.closestT == MAX_FLOAT)
-		{
-			vec3 dir = r.direction;
-			float a = 0.5 * (dir.y + 1.0);
-			vec3 skyGradient = (1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0);
-			return vec4(diffuseLightAttenuation * skyGradient, 1.0);
-		}
-
-		diffuseLightAttenuation *= diffuseLightIntensity;
-
-		vec3 direction = randNormHemisphere(rec.normal); // this is already normalized
-		r = Ray(rec.point, direction);
+		vec3 dir = r.direction;
+		float a = 0.5 * (dir.y + 1.0);
+		vec3 skyGradient = (1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0);
+		return vec4(diffuseLightAttenuation * skyGradient, 1.0);
 	}
 
 	return vec4(0.0, 0.0, 0.0, 1.0);
@@ -312,33 +349,33 @@ void main()
 		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
 		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), 0.0))
-		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.501))
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), 0.0)) // ground sphere
+		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.501)) // ground plane
 	);
 
 
-	// vec4 color = vec4(0.0);
-	// for (int i = 0; i < MAX_SAMPLES; ++i)
-	// {
-	// 	vec2 p = inPosition.xy * ubo.time;
-	// 	vec3 rayDir = normalize(inRayDir + hash32(p));
-	// 	vec3 origin = ubo.cameraPos;
+	vec4 color = vec4(0.0);
+	for (int i = 0; i < MAX_SAMPLES; ++i)
+	{
+		vec2 p = inPosition.xy * ubo.time;
+		vec3 rayDir = normalize(inRayDir + hash32(p));
+		vec3 origin = ubo.cameraPos;
 
-	// 	Ray ray = Ray(origin, rayDir);
-	// 	color += TraceRay(ray, objs);
-	// }
+		Ray ray = Ray(origin, rayDir);
+		color += TraceRay(ray, objs);
+	}
 
-	// // outColor = color / float(MAX_SAMPLES);
-	// outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
+	// outColor = color / float(MAX_SAMPLES);
+	outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
 
 
-	vec2 p = inPosition.xy * ubo.time;
-	vec3 rayDir = normalize(inRayDir);
-	vec3 origin = ubo.cameraPos;
+	// vec2 p = inPosition.xy * ubo.time;
+	// vec3 rayDir = normalize(inRayDir);
+	// vec3 origin = ubo.cameraPos;
 
-	Ray ray = Ray(origin, rayDir);
-	vec4 color = TraceRay(ray, objs);
+	// Ray ray = Ray(origin, rayDir);
+	// vec4 color = TraceRay(ray, objs);
 
-	// outColor = vec4((color.xyz), 1.0);
-	outColor = vec4(sqrt(color.xyz), 1.0);
+	// // outColor = vec4((color.xyz), 1.0);
+	// outColor = vec4(sqrt(color.xyz), 1.0);
 }
