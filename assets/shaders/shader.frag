@@ -21,11 +21,11 @@ layout(location = 0) out vec4 outColor;
 
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
-const float MIN_HIT_BIAS = 0.001; // floating point bias for ray intersections
+const float MIN_HIT_BIAS = 0.001; // prevents shadow acne caused by lack of floating point precision
 
-const int MAX_SAMPLES = 4;
-const int MAX_BOUNCES = 16;
 const uint NUM_OBJS = 4;
+const int MAX_SAMPLES = 4;
+const int MAX_BOUNCES = 8;
 
 
 // ---------------------------------------
@@ -90,7 +90,7 @@ vec3 randRange3(float minVal, float maxVal)
  */
 vec3 randUnitSphere(vec2 p)
 {
-	vec3 rand = hash32(p);
+	vec3 rand = hash32(p * ubo.time);
 	float phi = 2.0 * PI * rand.x;
 	float cosTheta = 2.0 * rand.y - 1.0;
 	float u = rand.z;
@@ -107,7 +107,7 @@ vec3 randUnitSphere(vec2 p)
 
 /**
  * @param x vec2 to generate random number
- * @returns random normalized vec3 within a unit sphere
+ * @returns normalized random vec3 within a unit sphere
  */
 vec3 randNormSphereVec(vec2 p)
 {
@@ -125,11 +125,11 @@ vec3 randUnitDisk(vec2 p)
 
 /**
  * @param normal normal of the surface
- * @returns random vec3 within a unit hemisphere
+ * @returns normalized random vec3 within a unit hemisphere
  */
 vec3 randNormHemisphere(const vec3 normal)
 {
-	vec3 onSphere = randNormSphereVec(normal.xy * ubo.time);
+	vec3 onSphere = randNormSphereVec(normal.xy);
 	if (dot(onSphere, normal) > 0.0)
 		return onSphere;
 
@@ -199,7 +199,7 @@ struct HitRecord
 /**
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
-bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
+void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 {
 	// in the quadriatic equation
 	// a = dir . dir
@@ -218,7 +218,7 @@ bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 	float discriminant = h * h - a * c;
 
 	if (discriminant < 0)
-		return false;
+		return;
 
 	float t = (-h - sqrt(discriminant)) / a;
 	if (t > MIN_HIT_BIAS && t < rec.closestT)
@@ -230,24 +230,20 @@ bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 		// radius is the magnitude of a vector from the center to the surface of the sphere
 		// so we are basically normalizing the normal vector of the sphere
 		rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius;
-
-		return true;
 	}
-
-	return false;
 }
 
 /**
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
-bool HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
+void HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
 {
 	float numerator = plane.intercept - dot(r.origin, plane.normal);
 	float denominator = dot(r.direction, plane.normal);
 
 	// the ray did not intersect the plane
 	if (denominator == 0.0)
-		return false;
+		return;
 
 	float t = numerator / denominator;
 	if (t > MIN_HIT_BIAS && t < rec.closestT)
@@ -257,20 +253,19 @@ bool HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
 		rec.obj.type = PLANE;
 		rec.obj.plane = plane;
 		rec.normal = rec.obj.plane.normal;
-
-		return true;
 	}
-
-	return false;
 }
 
-bool Hit(inout Primitive obj, const Ray r, inout HitRecord rec)
+/**
+ * calls the appropriate hit function
+ */
+void Hit(inout Primitive obj, const Ray r, inout HitRecord rec)
 {
 	if (obj.type == SPHERE)
-		return HitSphere(obj.sphere, r, rec);
+		HitSphere(obj.sphere, r, rec);
 
 	if (obj.type == PLANE)
-		return HitPlane(obj.plane, r, rec);
+		HitPlane(obj.plane, r, rec);
 }
 
 
@@ -279,26 +274,29 @@ bool Hit(inout Primitive obj, const Ray r, inout HitRecord rec)
  */
 vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 {
-	HitRecord rec;
-	float attenuation = 1.0;
+	const float diffuseLightIntensity = 0.5;
+	float diffuseLightAttenuation = 1.0;
 
 	for (int bounces = 0; bounces < MAX_BOUNCES; ++bounces)
 	{
+		HitRecord rec;
 		rec.closestT = MAX_FLOAT;
 		for (int i = 0; i < NUM_OBJS; ++i)
 		{
-			if (Hit(objs[i], r, rec))
-				attenuation *= 0.5;
+			Hit(objs[i], r, rec);
 		}
 
+		// if the ray doesn't intesect anything while bouncing,
+		// return the attenuated ambient color
 		if (rec.closestT == MAX_FLOAT)
 		{
-			// sky
 			vec3 dir = r.direction;
 			float a = 0.5 * (dir.y + 1.0);
 			vec3 skyGradient = (1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0);
-			return vec4(attenuation * skyGradient, 1.0);
+			return vec4(diffuseLightAttenuation * skyGradient, 1.0);
 		}
+
+		diffuseLightAttenuation *= diffuseLightIntensity;
 
 		vec3 direction = randNormHemisphere(rec.normal); // this is already normalized
 		r = Ray(rec.point, direction);
