@@ -19,7 +19,7 @@ layout(location = 1) in vec3 inRayDir;
 layout(location = 0) out vec4 outColor;
 
 
-#define ENABLE_SAMPLING 0
+#define ENABLE_SAMPLING 1
 
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
@@ -27,7 +27,7 @@ const float MIN_HIT_BIAS = 0.001; // prevents shadow acne caused by lack of floa
 
 const uint NUM_OBJS = 4;
 const uint MAX_SAMPLES = 4;
-const uint MAX_BOUNCES = 1 << 3; // 2^n
+const uint MAX_BOUNCES = 1 << 6; // 2^n
 
 
 // ---------------------------------------
@@ -44,7 +44,7 @@ uint baseHash(uvec2 p)
 }
 
 /**
- * @param x vec2 to generate random number
+ * @param `x` vec2 to generate random number
  * @returns random float
  */
 float hash12(vec2 x)
@@ -54,7 +54,7 @@ float hash12(vec2 x)
 }
 
 /**
- * @param x vec2 to generate random number
+ * @param `x` vec2 to generate random number
  * @returns random vec2
  */
 vec2 hash22(vec2 x)
@@ -65,7 +65,7 @@ vec2 hash22(vec2 x)
 }
 
 /**
- * @param x vec2 to generate random number
+ * @param `x` vec2 to generate random number
  * @returns random vec3
  */
 vec3 hash32(vec2 x)
@@ -77,8 +77,8 @@ vec3 hash32(vec2 x)
 
 /**
  * generates a random values within the range [min, max)
- * @param minVal min value of the range
- * @param maxVal max value of the range
+ * @param `minVal` min value of the range
+ * @param `maxVal` max value of the range
  * @returns random vec3
  */
 vec3 randRange3(float minVal, float maxVal)
@@ -87,7 +87,7 @@ vec3 randRange3(float minVal, float maxVal)
 }
 
 /**
- * @param p vec2 to generate random number
+ * @param `p` vec2 to generate random number
  * @returns random vec3 within a unit sphere
  */
 vec3 randUnitSphere(vec2 p)
@@ -108,7 +108,7 @@ vec3 randUnitSphere(vec2 p)
 }
 
 /**
- * @param x vec2 to generate random number
+ * @param `x` vec2 to generate random number
  * @returns normalized random vec3 within a unit sphere
  */
 vec3 randNormSphereVec(vec2 p)
@@ -117,7 +117,7 @@ vec3 randNormSphereVec(vec2 p)
 }
 
 /**
- * @param x vec2 to generate random number
+ * @param `x` vec2 to generate random number
  * @returns random vec3 within a disk (z component = 0.0)
  */
 vec3 randUnitDisk(vec2 p)
@@ -126,7 +126,7 @@ vec3 randUnitDisk(vec2 p)
 }
 
 /**
- * @param normal normal of the surface
+ * @param `normal` normal of the surface
  * @returns normalized random vec3 within a unit hemisphere
  */
 vec3 randNormHemisphere(const vec3 normal)
@@ -151,8 +151,8 @@ struct Ray
 };
 
 /**
- * @param r Ray object
- * @param t distance from the ray origin
+ * @param `r` Ray object
+ * @param `t` distance from the ray origin
  * @returns value of the ray hit point at distance `t`
  */
 vec3 RayAt(const Ray r, float t)
@@ -199,9 +199,9 @@ struct HitRecord
 
 // ---------- hit functions for primitives ----------------
 /**
- * @params sphere
- * @params r ray
- * @params rec used to pass the hit info
+ * @param `sphere`
+ * @param `r` ray
+ * @param `rec` used to pass the hit info
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
 void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
@@ -254,9 +254,9 @@ void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 }
 
 /**
- * @params plane
- * @params r ray
- * @params rec used to pass the hit info
+ * @param `plane`
+ * @param `r` ray
+ * @param `rec` used to pass the hit info
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
 void HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
@@ -285,9 +285,9 @@ void HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
  * scalar parameter of the parametric equation of a line (ray)),
  * and if the ray instersects an object `t` is updated.
  *
- * @params objs list of objects (primitives)
- * @params r ray
- * @params rec used to pass the hit info
+ * @param `objs` list of objects (primitives)
+ * @param `r` ray
+ * @param `rec` used to pass the hit info
  * @returns true if the ray intersects the objects (i.e., the value of `t` is not the furthest value),
  * and false if it doesn't.
  */
@@ -311,8 +311,8 @@ bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 
 
 /**
- * @params r ray
- * @params objs list of objects (primitives)
+ * @param `r` ray
+ * @param `objs` list of objects (primitives)
  * @returns color of the closest object hit
  */
 vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
@@ -328,7 +328,9 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 		if (Hit(objs, r, rec))
 		{
 			diffuseLightAttenuation *= diffuseLightIntensity;
-			vec3 direction = randNormHemisphere(rec.normal);
+
+			// instead of just randomly casting rays, the rays should be scattered towards the direction of the normal
+			vec3 direction = normalize(rec.normal + randNormHemisphere(rec.normal));
 			r = Ray(rec.point, direction);
 			continue;
 		}
