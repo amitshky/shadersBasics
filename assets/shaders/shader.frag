@@ -19,6 +19,8 @@ layout(location = 1) in vec3 inRayDir;
 layout(location = 0) out vec4 outColor;
 
 
+#define ENABLE_SAMPLING 0
+
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
 const float MIN_HIT_BIAS = 0.001; // prevents shadow acne caused by lack of floating point precision
@@ -319,7 +321,7 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 	float diffuseLightAttenuation = 1.0;
 
 	HitRecord rec;
-	for (int bounces = 0; bounces < MAX_BOUNCES; ++bounces)
+	for (uint bounces = 0; bounces < MAX_BOUNCES; ++bounces)
 	{
 		// if hit, then attenuate the color and
 		// cast the ray in a random direction
@@ -353,9 +355,9 @@ void main()
 		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.501)) // ground plane
 	);
 
-
+#if ENABLE_SAMPLING
 	vec4 color = vec4(0.0);
-	for (int i = 0; i < MAX_SAMPLES; ++i)
+	for (uint i = 0; i < MAX_SAMPLES; ++i)
 	{
 		vec2 p = inPosition.xy * ubo.time;
 		vec3 rayDir = normalize(inRayDir + hash32(p));
@@ -367,15 +369,15 @@ void main()
 
 	// outColor = color / float(MAX_SAMPLES);
 	outColor = vec4(sqrt((color / float(MAX_SAMPLES)).xyz), 1.0);
+#else
+	vec2 p = inPosition.xy * ubo.time;
+	vec3 rayDir = normalize(inRayDir);
+	vec3 origin = ubo.cameraPos;
 
+	Ray ray = Ray(origin, rayDir);
+	vec4 color = TraceRay(ray, objs);
 
-	// vec2 p = inPosition.xy * ubo.time;
-	// vec3 rayDir = normalize(inRayDir);
-	// vec3 origin = ubo.cameraPos;
-
-	// Ray ray = Ray(origin, rayDir);
-	// vec4 color = TraceRay(ray, objs);
-
-	// // outColor = vec4((color.xyz), 1.0);
-	// outColor = vec4(sqrt(color.xyz), 1.0);
+	// outColor = vec4((color.xyz), 1.0);
+	outColor = vec4(sqrt(color.xyz), 1.0);
+#endif
 }
