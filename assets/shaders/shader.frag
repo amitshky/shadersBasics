@@ -212,6 +212,7 @@ struct HitRecord
 };
 
 // ---------- hit functions for primitives ----------------
+
 /**
  * @param `sphere`
  * @param `r` ray
@@ -348,18 +349,30 @@ bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 }
 
 
+// ----------  Ray scatter/reflect functions for materials ----------------
+
+/**
+ * @param `normal` normal of the surface
+ * @returns reflected ray based on lambertian material (not normalized)
+ */
 vec3 LambertianScatter(const vec3 normal)
 {
 	// instead of just randomly casting rays, the rays should be scattered towards the direction of the normal
 	return normal + randNormHemisphere(normal);
 }
 
+/**
+ * @param `rayDir` direction of the ray
+ * @param `normal` normal of the surface
+ * @returns reflected ray based on metal material (not normalized)
+ */
 vec3 MetalScatter(const vec3 rayDir, const vec3 normal)
 {
 	return rayDir - 2 * dot(rayDir, normal) * normal;
 }
 
 
+// --------------------------------------------------------
 /**
  * @param `r` ray
  * @param `objs` list of objects (primitives)
