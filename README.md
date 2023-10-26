@@ -76,8 +76,9 @@ checkout `735f770a3fcfca2b98da81e2a32400ecbdd55bd2`\
 
 ## References
 * [Vulkan tutorial](https://vulkan-tutorial.com/)
-* [learnopengl.com](https://learnopengl.com/)
 * [Vulkan Specification](https://registry.khronos.org/vulkan/specs/1.3-extensions/pdf/vkspec.pdf)
+* [learnopengl.com](https://learnopengl.com/)
+* [Scratchapixel](https://www.scratchapixel.com)
 * [Sascha Willems examples](https://github.com/SaschaWillems/Vulkan)
 * [vkguide.dev](https://vkguide.dev/)
 * [An introduction to Shader Art Coding - kishimisu](https://youtu.be/f4s1h2YETNY)

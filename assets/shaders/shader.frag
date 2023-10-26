@@ -92,7 +92,7 @@ vec3 randRange3(float minVal, float maxVal)
  */
 vec3 randUnitSphere(vec2 p)
 {
-	vec3 rand = hash32(p);
+	vec3 rand = hash32(p * ubo.time);
 	float phi = 2.0 * PI * rand.x;
 	float cosTheta = 2.0 * rand.y - 1.0;
 	float u = rand.z;
@@ -141,9 +141,7 @@ vec3 randNormHemisphere(const vec3 normal)
 
 // ---------------------------------------
 
-/**
- * // NOTE: Always normalize the direction when initializing
- */
+// NOTE: Always normalize the direction when initializing
 struct Ray
 {
 	vec3 origin;
@@ -175,7 +173,7 @@ struct Sphere
 struct Plane
 {
 	vec3 normal;
-	float intercept;
+	vec3 position; // a point on the plane
 };
 
 // like a base class for prmitives
@@ -206,6 +204,8 @@ struct HitRecord
  */
 bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 {
+	// equation of a sphere
+	// (x - c) . (x - c) - r ^ 2 = 0
 	// in the quadriatic equation
 	// a = dir . dir
 	// b = 2 * (dir . (org - center))
@@ -263,7 +263,12 @@ bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
  */
 bool HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
 {
-	float numerator = plane.intercept - dot(r.origin, plane.normal);
+	// equation of a plane
+	// (p - p0) . n = 0
+	// p is any point on the plane
+	// p0 is position (of a point on the plane)
+	// n is normal of the plane
+	float numerator = dot(plane.position - r.origin, plane.normal);
 	float denominator = dot(r.direction, plane.normal);
 
 	// the ray did not intersect the plane
@@ -359,11 +364,11 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 void main()
 {
 	Primitive objs[NUM_OBJS] = Primitive[NUM_OBJS](
-		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), 0.0)),
-		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), 0.0)) // ground sphere
-		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), -0.501)) // ground plane
+		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0))),
+		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0))),
+		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0))),
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), vec3(0.0))) // ground sphere
+		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), vec3(0.0, -0.501, 0.0))) // ground plane
 	);
 
 #if ENABLE_SAMPLING
