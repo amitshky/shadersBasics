@@ -19,7 +19,7 @@ layout(location = 1) in vec3 inRayDir;
 layout(location = 0) out vec4 outColor;
 
 
-#define ENABLE_SAMPLING 1
+#define ENABLE_SAMPLING 0
 
 const float PI = 3.14159265359;
 const float MAX_FLOAT = 1.0 / 0.0;
@@ -308,19 +308,31 @@ bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 
 	for (int i = 0; i < NUM_OBJS; ++i)
 	{
-		if (objs[i].type == SPHERE)
+		switch (objs[i].type)
 		{
+		case SPHERE:
 			if (HitSphere(objs[i].sphere, r, rec))
 				isHit = true;
-		}
-		else if (objs[i].type == PLANE)
-		{
+			break;
+		case PLANE:
 			if (HitPlane(objs[i].plane, r, rec))
 				isHit = true;
+			break;
 		}
 	}
 
 	return isHit;
+}
+
+
+vec3 LambertianScatter(const vec3 normal)
+{
+	return normal + randNormHemisphere(normal);
+}
+
+vec3 MetalScatter(const vec3 rayDir, const vec3 normal)
+{
+	return rayDir - 2 * dot(rayDir, normal) * normal;
 }
 
 
@@ -343,8 +355,13 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 		{
 			diffuseLightAttenuation *= diffuseLightIntensity;
 
+			// lambertian
 			// instead of just randomly casting rays, the rays should be scattered towards the direction of the normal
-			vec3 direction = normalize(rec.normal + randNormHemisphere(rec.normal));
+			// vec3 direction = normalize(LambertianScatter(rec.normal));
+
+			// metal
+			vec3 direction = normalize(MetalScatter(r.direction, rec.normal));
+
 			r = Ray(rec.point, direction);
 			continue;
 		}
