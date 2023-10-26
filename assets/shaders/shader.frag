@@ -380,7 +380,6 @@ vec3 MetalScatter(const vec3 rayDir, const vec3 normal)
  */
 vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 {
-	const vec3 albedo = vec3(0.45, 0.6, 0.3);
 	vec3 attenuation = vec3(1.0);
 
 	HitRecord rec;
