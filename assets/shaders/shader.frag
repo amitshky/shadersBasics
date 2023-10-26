@@ -204,7 +204,7 @@ struct HitRecord
  * @param `rec` used to pass the hit info
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
-void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
+bool HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 {
 	// in the quadriatic equation
 	// a = dir . dir
@@ -223,7 +223,7 @@ void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 	float discriminant = h * h - a * c;
 
 	if (discriminant < 0)
-		return;
+		return false;
 
 	float t = (-h - sqrt(discriminant)) / a;
 	if (t > MIN_HIT_BIAS && t < rec.closestT)
@@ -235,7 +235,7 @@ void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 		// radius is the magnitude of a vector from the center to the surface of the sphere
 		// so we are basically normalizing the normal vector of the sphere
 		rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius;
-		return; // no need to calc further if the camera is outside the sphere
+		return true; // no need to calc further if the camera is outside the sphere
 	}
 
 	// useful if the camera is inside the sphere
@@ -249,8 +249,10 @@ void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
 		// radius is the magnitude of a vector from the center to the surface of the sphere
 		// so we are basically normalizing the normal vector of the sphere
 		rec.normal = (rec.point - rec.obj.sphere.center) / rec.obj.sphere.radius;
-		return;
+		return true;
 	}
+
+	return false;
 }
 
 /**
@@ -259,14 +261,14 @@ void HitSphere(const Sphere sphere, const Ray r, inout HitRecord rec)
  * @param `rec` used to pass the hit info
  * calculates if the ray hit the sphere and stores the hit info in `rec` if it did
  */
-void HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
+bool HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
 {
 	float numerator = plane.intercept - dot(r.origin, plane.normal);
 	float denominator = dot(r.direction, plane.normal);
 
 	// the ray did not intersect the plane
 	if (denominator == 0.0)
-		return;
+		return false;
 
 	float t = numerator / denominator;
 	if (t > MIN_HIT_BIAS && t < rec.closestT)
@@ -276,37 +278,44 @@ void HitPlane(const Plane plane, const Ray r, inout HitRecord rec)
 		rec.obj.type = PLANE;
 		rec.obj.plane = plane;
 		rec.normal = rec.obj.plane.normal;
+
+		return true;
 	}
+
+	return false;
 }
 
 /**
- * calls the appropriate hit function and stores the hit info in `rec`.
+ * calls the appropriate hit function and stores the hit info in `rec`
  * the hit info initially has the furthest value of `t` (the
  * scalar parameter of the parametric equation of a line (ray)),
- * and if the ray instersects an object `t` is updated.
+ * and if the ray instersects an object `t` is updated
  *
  * @param `objs` list of objects (primitives)
  * @param `r` ray
  * @param `rec` used to pass the hit info
- * @returns true if the ray intersects the objects (i.e., the value of `t` is not the furthest value),
- * and false if it doesn't.
+ * @returns true if the ray intersects the objects, and false if it doesn't.
  */
 bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 {
+	bool isHit = false;
 	rec.closestT = MAX_FLOAT;
+
 	for (int i = 0; i < NUM_OBJS; ++i)
 	{
 		if (objs[i].type == SPHERE)
-			HitSphere(objs[i].sphere, r, rec);
-
+		{
+			if (HitSphere(objs[i].sphere, r, rec))
+				isHit = true;
+		}
 		else if (objs[i].type == PLANE)
-			HitPlane(objs[i].plane, r, rec);
+		{
+			if (HitPlane(objs[i].plane, r, rec))
+				isHit = true;
+		}
 	}
 
-	if (rec.closestT == MAX_FLOAT)
-		return false;
-
-	return true;
+	return isHit;
 }
 
 
