@@ -168,6 +168,16 @@ const uint PLANE = 1;
 const uint LAMBERTIAN = 0; // diffuse
 const uint METAL = 1;
 
+struct Material
+{
+	// common
+	uint type;
+	vec3 albedo;
+
+	// metal
+	float roughness; // [0, 1]
+};
+
 struct Sphere
 {
 	vec3 center;
@@ -188,7 +198,7 @@ struct Primitive
 	uint type;
 	Sphere sphere;
 	Plane plane;
-	uint material;
+	Material mat;
 };
 
 // to record the closest object hit
@@ -198,7 +208,7 @@ struct HitRecord
 	vec3 normal;
 	vec3 point; // point of hit
 	Primitive obj; // object at point of hit
-	uint material; // type of material
+	Material mat;
 };
 
 // ---------- hit functions for primitives ----------------
@@ -320,14 +330,15 @@ bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 			if (HitSphere(objs[i].sphere, r, rec))
 			{
 				isHit = true;
-				rec.material = objs[i].material;
+				rec.mat = objs[i].mat;
 			}
 			break;
+
 		case PLANE:
 			if (HitPlane(objs[i].plane, r, rec))
 			{
 				isHit = true;
-				rec.material = objs[i].material;
+				rec.mat = objs[i].mat;
 			}
 			break;
 		}
@@ -366,16 +377,17 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 		// cast the ray in a random direction
 		if (Hit(objs, r, rec))
 		{
-			attenuation *= albedo;
+			attenuation *= rec.mat.albedo;
 			vec3 direction = vec3(0.0);
 
-			switch (rec.material)
+			switch (rec.mat.type)
 			{
 			case LAMBERTIAN:
 				direction = normalize(LambertianScatter(rec.normal));
 				break;
+
 			case METAL:
-				direction = normalize(MetalScatter(r.direction, rec.normal));
+				direction = normalize(MetalScatter(r.direction, rec.normal) + rec.mat.roughness * randUnitSphere(inPosition.xy));
 				break;
 			}
 
@@ -398,11 +410,11 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 void main()
 {
 	Primitive objs[NUM_OBJS] = Primitive[NUM_OBJS](
-		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), LAMBERTIAN), // right sphere
-		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), METAL), // middle sphere
-		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), LAMBERTIAN), // left sphere
-		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), vec3(0.0)), LAMBERTIAN) // ground sphere
-		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), vec3(0.0, -0.501, 0.0)), LAMBERTIAN) // ground plane
+		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(METAL, vec3(0.8, 0.8, 0.8), 0.1)), // left sphere
+		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(LAMBERTIAN, vec3(0.6, 0.4, 0.4), 0.0)), // middle sphere
+		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(METAL, vec3(0.8, 0.7, 0.5), 0.5)), // right sphere
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), vec3(0.0)), Material(LAMBERTIAN, vec3(0.45, 0.6, 0.3), 0.0)) // ground sphere
+		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), vec3(0.0, -0.501, 0.0)), Material(LAMBERTIAN, vec3(0.45, 0.6, 0.3), 0.0)) // ground plane
 	);
 
 #if ENABLE_SAMPLING
