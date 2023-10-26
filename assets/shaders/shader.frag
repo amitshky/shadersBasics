@@ -164,6 +164,10 @@ vec3 RayAt(const Ray r, float t)
 const uint SPHERE = 0;
 const uint PLANE = 1;
 
+// types of materials
+const uint LAMBERTIAN = 0; // diffuse
+const uint METAL = 1;
+
 struct Sphere
 {
 	vec3 center;
@@ -184,6 +188,7 @@ struct Primitive
 	uint type;
 	Sphere sphere;
 	Plane plane;
+	uint material;
 };
 
 // to record the closest object hit
@@ -193,6 +198,7 @@ struct HitRecord
 	vec3 normal;
 	vec3 point; // point of hit
 	Primitive obj; // object at point of hit
+	uint material; // type of material
 };
 
 // ---------- hit functions for primitives ----------------
@@ -312,11 +318,17 @@ bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 		{
 		case SPHERE:
 			if (HitSphere(objs[i].sphere, r, rec))
+			{
 				isHit = true;
+				rec.material = objs[i].material;
+			}
 			break;
 		case PLANE:
 			if (HitPlane(objs[i].plane, r, rec))
+			{
 				isHit = true;
+				rec.material = objs[i].material;
+			}
 			break;
 		}
 	}
@@ -327,6 +339,7 @@ bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 
 vec3 LambertianScatter(const vec3 normal)
 {
+	// instead of just randomly casting rays, the rays should be scattered towards the direction of the normal
 	return normal + randNormHemisphere(normal);
 }
 
@@ -343,8 +356,8 @@ vec3 MetalScatter(const vec3 rayDir, const vec3 normal)
  */
 vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 {
-	const float diffuseLightIntensity = 0.5;
-	float diffuseLightAttenuation = 1.0;
+	const vec3 albedo = vec3(0.45, 0.6, 0.3);
+	vec3 attenuation = vec3(1.0);
 
 	HitRecord rec;
 	for (uint bounces = 0; bounces < MAX_BOUNCES; ++bounces)
@@ -353,14 +366,18 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 		// cast the ray in a random direction
 		if (Hit(objs, r, rec))
 		{
-			diffuseLightAttenuation *= diffuseLightIntensity;
+			attenuation *= albedo;
+			vec3 direction = vec3(0.0);
 
-			// lambertian
-			// instead of just randomly casting rays, the rays should be scattered towards the direction of the normal
-			// vec3 direction = normalize(LambertianScatter(rec.normal));
-
-			// metal
-			vec3 direction = normalize(MetalScatter(r.direction, rec.normal));
+			switch (rec.material)
+			{
+			case LAMBERTIAN:
+				direction = normalize(LambertianScatter(rec.normal));
+				break;
+			case METAL:
+				direction = normalize(MetalScatter(r.direction, rec.normal));
+				break;
+			}
 
 			r = Ray(rec.point, direction);
 			continue;
@@ -371,7 +388,7 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 		vec3 dir = r.direction;
 		float a = 0.5 * (dir.y + 1.0);
 		vec3 skyGradient = (1.0 - a) * vec3(1.0) + a * vec3(0.5, 0.7, 1.0);
-		return vec4(diffuseLightAttenuation * skyGradient, 1.0);
+		return vec4(attenuation * skyGradient, 1.0);
 	}
 
 	return vec4(0.0, 0.0, 0.0, 1.0);
@@ -381,11 +398,11 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 void main()
 {
 	Primitive objs[NUM_OBJS] = Primitive[NUM_OBJS](
-		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0))),
-		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0))),
-		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0))),
-		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), vec3(0.0))) // ground sphere
-		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), vec3(0.0, -0.501, 0.0))) // ground plane
+		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), LAMBERTIAN), // right sphere
+		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), METAL), // middle sphere
+		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), LAMBERTIAN), // left sphere
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), vec3(0.0)), LAMBERTIAN) // ground sphere
+		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), vec3(0.0, -0.501, 0.0)), LAMBERTIAN) // ground plane
 	);
 
 #if ENABLE_SAMPLING
