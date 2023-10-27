@@ -390,6 +390,9 @@ float Schlick(const float cosine, const float refractiveIndex)
 }
 
 /**
+ * // NOTE: this function also checks for total internal reflection and returns
+ * the direction of the reflected ray if the ray doesn't get refracted.
+ *
  * @param `rayDir` normalized direction of the ray
  * @param `normal` normlized normal of the surface
  * @param `refractiveIndex` refractive index of the material
