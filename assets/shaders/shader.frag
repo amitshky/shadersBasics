@@ -167,6 +167,7 @@ const uint PLANE = 1;
 // types of materials
 const uint LAMBERTIAN = 0; // diffuse
 const uint METAL = 1;
+const uint DIELECTRIC = 2; // glass / refractive
 
 struct Material
 {
@@ -176,6 +177,9 @@ struct Material
 
 	// metal
 	float roughness; // [0, 1]
+
+	// dielectric
+	float refractiveIndex;
 };
 
 struct Sphere
@@ -352,23 +356,67 @@ bool Hit(inout Primitive objs[NUM_OBJS], const Ray r, inout HitRecord rec)
 // ----------  Ray scatter/reflect functions for materials ----------------
 
 /**
- * @param `normal` normal of the surface
- * @returns reflected ray based on lambertian material (not normalized)
+ * @param `normal` normalized normal of the surface
+ * @returns random direction (not normalized)
  */
-vec3 LambertianScatter(const vec3 normal)
+vec3 Diffuse(const vec3 normal)
 {
 	// instead of just randomly casting rays, the rays should be scattered towards the direction of the normal
 	return normal + randNormHemisphere(normal);
 }
 
 /**
- * @param `rayDir` direction of the ray
- * @param `normal` normal of the surface
- * @returns reflected ray based on metal material (not normalized)
+ * @param `rayDir` normalized direction of the ray
+ * @param `normal` normalized normal of the surface
+ * @returns direction of a perfectly reflected ray (not normalized)
  */
-vec3 MetalScatter(const vec3 rayDir, const vec3 normal)
+vec3 Reflect(const vec3 rayDir, const vec3 normal)
 {
 	return rayDir - 2 * dot(rayDir, normal) * normal;
+}
+
+float Schlick(const float cosine, const float refractiveIndex)
+{
+	// Use Schlick's approximation for reflectance.
+	float r0 = (1.0 - refractiveIndex) / (1.0 + refractiveIndex);
+	r0 = r0 * r0;
+	return r0 + (1.0 - r0) * pow((1.0 - cosine), 5.0);
+}
+
+/**
+ * @param `rayDir` normalized direction of the ray
+ * @param `normal` normlized normal of the surface
+ * @param `refractiveIndex` refractive index of the material
+ * @returns direction of a perfectly reflected ray (not normalized)
+ */
+vec3 Refract(const vec3 rayDir, const vec3 normal, const float refractiveIndex)
+{
+	vec3 n = vec3(0.0); // normal
+	float ri = 0.0; // refractive index
+
+	// check if front face
+	float rDotN = dot(rayDir, normal);
+	if (rDotN > 0.0) // back face
+	{
+		n = -normal;
+		ri = refractiveIndex;
+	}
+	else // front face
+	{
+		n = normal;
+		ri = 1.0 / refractiveIndex;
+	}
+
+	float cosTheta = min(dot(-rayDir, n), 1.0);
+	float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+	if ((refractiveIndex * sinTheta) > 1.0 || (Schlick(cosTheta, refractiveIndex) > hash12(inPosition.xy * ubo.time))) // cannot refract
+		return Reflect(rayDir, n);
+
+	vec3 rayOutPerp = refractiveIndex * (rayDir + cosTheta * n);
+	float lenSq = rayOutPerp.x * rayOutPerp.x + rayOutPerp.y * rayOutPerp.y + rayOutPerp.z * rayOutPerp.z;
+	vec3 rayOutPara = -sqrt(abs(1.0 - lenSq)) * n;
+	return rayOutPerp + rayOutPara;
 }
 
 
@@ -395,11 +443,15 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 			switch (rec.mat.type)
 			{
 			case LAMBERTIAN:
-				direction = normalize(LambertianScatter(rec.normal));
+				direction = normalize(Diffuse(rec.normal));
 				break;
 
 			case METAL:
-				direction = normalize(MetalScatter(r.direction, rec.normal) + rec.mat.roughness * randUnitSphere(inPosition.xy));
+				direction = normalize(Reflect(r.direction, rec.normal) + rec.mat.roughness * randUnitSphere(inPosition.xy));
+				break;
+
+			case DIELECTRIC:
+				direction = normalize(Refract(r.direction, rec.normal, rec.mat.refractiveIndex));
 				break;
 			}
 
@@ -422,11 +474,11 @@ vec4 TraceRay(Ray r, inout Primitive objs[NUM_OBJS])
 void main()
 {
 	Primitive objs[NUM_OBJS] = Primitive[NUM_OBJS](
-		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(METAL, vec3(0.8, 0.8, 0.8), 0.1)), // left sphere
-		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(LAMBERTIAN, vec3(0.6, 0.4, 0.4), 0.0)), // middle sphere
-		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(METAL, vec3(0.8, 0.7, 0.5), 0.5)), // right sphere
-		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), vec3(0.0)), Material(LAMBERTIAN, vec3(0.45, 0.6, 0.3), 0.0)) // ground sphere
-		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), vec3(0.0, -0.501, 0.0)), Material(LAMBERTIAN, vec3(0.45, 0.6, 0.3), 0.0)) // ground plane
+		Primitive(SPHERE, Sphere(vec3(-1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(DIELECTRIC, vec3(1.0, 1.0, 1.0), 0.0, 1.5)), // left sphere
+		Primitive(SPHERE, Sphere(vec3( 0.0, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(LAMBERTIAN, vec3(0.6, 0.4, 0.4), 0.0, 0.0)), // middle sphere
+		Primitive(SPHERE, Sphere(vec3( 1.2, 0.0, -1.0), 0.5), Plane(vec3(0.0), vec3(0.0)), Material(METAL, vec3(0.8, 0.7, 0.5), 0.5, 0.0)), // right sphere
+		Primitive(SPHERE, Sphere(vec3( 0.0, -500.501, -1.0), 500.0), Plane(vec3(0.0), vec3(0.0)), Material(LAMBERTIAN, vec3(0.45, 0.6, 0.3), 0.0, 0.0)) // ground sphere
+		// Primitive(PLANE,  Sphere(vec3(0.0), 0.0), Plane(vec3(0.0, 1.0, 0.0), vec3(0.0, -0.501, 0.0)), Material(LAMBERTIAN, vec3(0.45, 0.6, 0.3), 0.0, 0.0)) // ground plane
 	);
 
 #if ENABLE_SAMPLING
