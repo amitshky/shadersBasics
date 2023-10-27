@@ -139,6 +139,13 @@ vec3 randNormHemisphere(const vec3 normal)
 	return -onSphere;
 }
 
+// --------------------------------------
+
+float LengthSquared(const vec3 v)
+{
+	return v.x * v.x + v.y * v.y + v.z * v.z;
+}
+
 // ---------------------------------------
 
 // NOTE: Always normalize the direction when initializing
@@ -407,15 +414,15 @@ vec3 Refract(const vec3 rayDir, const vec3 normal, const float refractiveIndex)
 		ri = 1.0 / refractiveIndex;
 	}
 
-	float cosTheta = min(dot(-rayDir, n), 1.0);
+	float cosTheta = min(dot(rayDir, n), 1.0);
 	float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+	float random = hash12(inPosition.xy * ubo.time);
 
-	if ((refractiveIndex * sinTheta) > 1.0 || (Schlick(cosTheta, refractiveIndex) > hash12(inPosition.xy * ubo.time))) // cannot refract
+	if ((refractiveIndex * sinTheta) > 1.0 || (Schlick(cosTheta, refractiveIndex) > random)) // cannot refract
 		return Reflect(rayDir, n);
 
 	vec3 rayOutPerp = refractiveIndex * (rayDir + cosTheta * n);
-	float lenSq = rayOutPerp.x * rayOutPerp.x + rayOutPerp.y * rayOutPerp.y + rayOutPerp.z * rayOutPerp.z;
-	vec3 rayOutPara = -sqrt(abs(1.0 - lenSq)) * n;
+	vec3 rayOutPara = -sqrt(abs(1.0 - LengthSquared(rayOutPerp))) * n;
 	return rayOutPerp + rayOutPara;
 }
 
