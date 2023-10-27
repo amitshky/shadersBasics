@@ -1,8 +1,5 @@
 #version 450
 
-// TODO: Defocus blur
-// TODO: accumulate samples
-
 layout(binding = 0) uniform UniformBufferObject
 {
 	vec3 resolution;
