@@ -58,7 +58,7 @@ python format.py
 
 ## Screenshots
 
-Ray-traced spheres (with metal, diffused, and dielectric materials)\
+Ray-traced spheres (with metal, diffused, and dielectric materials) (checkout `6e73fb92de5306edc824edf9dcb3453407298946`)\
 <img src="img/dielectric.png" width=500>
 
 Ray-traced spheres (with metal and diffused materials) (checkout `c94224835f64ca94fccf183542887896ab54a772`)\
