@@ -375,6 +375,12 @@ vec3 Reflect(const vec3 rayDir, const vec3 normal)
 	return rayDir - 2 * dot(rayDir, normal) * normal;
 }
 
+/**
+ * Schlick's Approximation for reflectance of a dielectric material
+ * @param `cosine` cosine of the angle between ray direction and the normal
+ * @param `refractiveIndex` refractive index of the material
+ * @returns contribution of Fresnel factor in reflection
+ */
 float Schlick(const float cosine, const float refractiveIndex)
 {
 	// Use Schlick's approximation for reflectance.
@@ -421,6 +427,7 @@ vec3 Refract(const vec3 rayDir, const vec3 normal, const float refractiveIndex)
 
 
 // --------------------------------------------------------
+
 /**
  * @param `r` ray
  * @param `objs` list of objects (primitives)
