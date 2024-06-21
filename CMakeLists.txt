@@ -8,7 +8,7 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT $
 
 
 # project options
-option(SHADERS_BASICS_USE_PRE_BUILT_LIB "Use pre-built libraries or custom build them" ON)
+option(SHADERS_BASICS_USE_PRE_BUILT_LIB "Use pre-built libraries or custom build them" OFF)
 
 # GLFW options
 option(GLFW_BUILD_EXAMPLES "Build the GLFW example programs" OFF)
